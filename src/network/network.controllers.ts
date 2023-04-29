@@ -19,6 +19,7 @@ import {
 import { EthereumBase, TokenInfo } from '../chains/ethereum/ethereum-base';
 import { Cronos } from '../chains/cronos/cronos';
 import { Near } from '../chains/near/near';
+import { Kava } from '../chains/kava/kava';
 import { Nearish, Xdcish } from '../services/common-interfaces';
 
 export async function getStatus(
@@ -35,6 +36,8 @@ export async function getStatus(
   if (req.chain) {
     if (req.chain === 'avalanche') {
       connections.push(Avalanche.getInstance(req.network as string));
+    } else if (req.chain === 'kava') {
+      connections.push(Kava.getInstance(req.network as string));
     } else if (req.chain === 'binance-smart-chain') {
       connections.push(BinanceSmartChain.getInstance(req.network as string));
     } else if (req.chain === 'harmony') {
@@ -62,6 +65,11 @@ export async function getStatus(
     const avalancheConnections = Avalanche.getConnectedInstances();
     connections = connections.concat(
       avalancheConnections ? Object.values(avalancheConnections) : []
+    );
+
+    const kavaConnections = Kava.getConnectedInstances();
+    connections = connections.concat(
+      kavaConnections ? Object.values(kavaConnections) : []
     );
 
     const harmonyConnections = Harmony.getConnectedInstances();
@@ -136,6 +144,8 @@ export async function getTokens(req: TokensRequest): Promise<TokensResponse> {
   if (req.chain && req.network) {
     if (req.chain === 'avalanche') {
       connection = Avalanche.getInstance(req.network);
+    } else if (req.chain === 'kava') {
+      connection = Kava.getInstance(req.network);
     } else if (req.chain === 'binance-smart-chain') {
       connection = BinanceSmartChain.getInstance(req.network);
     } else if (req.chain === 'harmony') {

@@ -1,0 +1,435 @@
+[
+	{
+		"type": "constructor",
+		"stateMutability": "nonpayable",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "_weth",
+				"internalType": "contract IWETH"
+			}
+		]
+	},
+	{
+		"type": "event",
+		"name": "FactoryAddressSet",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "factoryAddress",
+				"internalType": "address",
+				"indexed": false
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "OwnershipTransferred",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "previousOwner",
+				"internalType": "address",
+				"indexed": true
+			},
+			{
+				"type": "address",
+				"name": "newOwner",
+				"internalType": "address",
+				"indexed": true
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "PoolBalanceChanged",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "liquidityProvider",
+				"internalType": "address",
+				"indexed": true
+			},
+			{
+				"type": "address[]",
+				"name": "tokens",
+				"internalType": "contract IERC20[]",
+				"indexed": false
+			},
+			{
+				"type": "int256[]",
+				"name": "deltas",
+				"internalType": "int256[]",
+				"indexed": false
+			},
+			{
+				"type": "uint256[]",
+				"name": "protocolFeeAmounts",
+				"internalType": "uint256[]",
+				"indexed": false
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "Swap",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "tokenIn",
+				"internalType": "contract IERC20",
+				"indexed": true
+			},
+			{
+				"type": "address",
+				"name": "tokenOut",
+				"internalType": "contract IERC20",
+				"indexed": true
+			},
+			{
+				"type": "uint256",
+				"name": "amountIn",
+				"internalType": "uint256",
+				"indexed": false
+			},
+			{
+				"type": "uint256",
+				"name": "amountOut",
+				"internalType": "uint256",
+				"indexed": false
+			},
+			{
+				"type": "uint256",
+				"name": "protocolSwapFeeAmount",
+				"internalType": "uint256",
+				"indexed": false
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "function",
+		"stateMutability": "view",
+		"outputs": [
+			{
+				"type": "address",
+				"name": "",
+				"internalType": "contract IGamutFactory"
+			}
+		],
+		"name": "Factory",
+		"inputs": []
+	},
+	{
+		"type": "function",
+		"stateMutability": "payable",
+		"outputs": [
+			{
+				"type": "int256[]",
+				"name": "assetDeltas",
+				"internalType": "int256[]"
+			}
+		],
+		"name": "batchSwap",
+		"inputs": [
+			{
+				"type": "tuple[]",
+				"name": "swaps",
+				"internalType": "struct Router.BatchSwapStep[]",
+				"components": [
+					{
+						"type": "uint256",
+						"name": "assetInIndex",
+						"internalType": "uint256"
+					},
+					{
+						"type": "uint256",
+						"name": "assetOutIndex",
+						"internalType": "uint256"
+					},
+					{
+						"type": "uint256",
+						"name": "amount",
+						"internalType": "uint256"
+					}
+				]
+			},
+			{
+				"type": "address[]",
+				"name": "assets",
+				"internalType": "address[]"
+			},
+			{
+				"type": "tuple",
+				"name": "funds",
+				"internalType": "struct Router.FundManagement",
+				"components": [
+					{
+						"type": "address",
+						"name": "sender",
+						"internalType": "address"
+					},
+					{
+						"type": "address",
+						"name": "recipient",
+						"internalType": "address payable"
+					}
+				]
+			},
+			{
+				"type": "int256[]",
+				"name": "limits",
+				"internalType": "int256[]"
+			},
+			{
+				"type": "uint256",
+				"name": "deadline",
+				"internalType": "uint256"
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "nonpayable",
+		"outputs": [],
+		"name": "exitPool",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "sender",
+				"internalType": "address"
+			},
+			{
+				"type": "tuple",
+				"name": "request",
+				"internalType": "struct Router.ExitPoolRequest",
+				"components": [
+					{
+						"type": "address[]",
+						"name": "tokens",
+						"internalType": "contract IERC20[]"
+					},
+					{
+						"type": "uint256[]",
+						"name": "minAmountsOut",
+						"internalType": "uint256[]"
+					},
+					{
+						"type": "bytes",
+						"name": "userData",
+						"internalType": "bytes"
+					}
+				]
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "payable",
+		"outputs": [],
+		"name": "joinPool",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "recipient",
+				"internalType": "address"
+			},
+			{
+				"type": "tuple",
+				"name": "request",
+				"internalType": "struct Router.JoinPoolRequest",
+				"components": [
+					{
+						"type": "address[]",
+						"name": "tokens",
+						"internalType": "contract IERC20[]"
+					},
+					{
+						"type": "uint256[]",
+						"name": "maxAmountsIn",
+						"internalType": "uint256[]"
+					},
+					{
+						"type": "bytes",
+						"name": "userData",
+						"internalType": "bytes"
+					}
+				]
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "view",
+		"outputs": [
+			{
+				"type": "address",
+				"name": "",
+				"internalType": "address"
+			}
+		],
+		"name": "owner",
+		"inputs": []
+	},
+	{
+		"type": "function",
+		"stateMutability": "nonpayable",
+		"outputs": [
+			{
+				"type": "int256[]",
+				"name": "deltas",
+				"internalType": "int256[]"
+			}
+		],
+		"name": "queryBatchSwap",
+		"inputs": [
+			{
+				"type": "tuple[]",
+				"name": "swaps",
+				"internalType": "struct Router.BatchSwapStep[]",
+				"components": [
+					{
+						"type": "uint256",
+						"name": "assetInIndex",
+						"internalType": "uint256"
+					},
+					{
+						"type": "uint256",
+						"name": "assetOutIndex",
+						"internalType": "uint256"
+					},
+					{
+						"type": "uint256",
+						"name": "amount",
+						"internalType": "uint256"
+					}
+				]
+			},
+			{
+				"type": "address[]",
+				"name": "assets",
+				"internalType": "address[]"
+			},
+			{
+				"type": "tuple",
+				"name": "funds",
+				"internalType": "struct Router.FundManagement",
+				"components": [
+					{
+						"type": "address",
+						"name": "sender",
+						"internalType": "address"
+					},
+					{
+						"type": "address",
+						"name": "recipient",
+						"internalType": "address payable"
+					}
+				]
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "nonpayable",
+		"outputs": [],
+		"name": "renounceOwnership",
+		"inputs": []
+	},
+	{
+		"type": "function",
+		"stateMutability": "nonpayable",
+		"outputs": [],
+		"name": "setGamutFactory",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "_factory",
+				"internalType": "contract IGamutFactory"
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "payable",
+		"outputs": [
+			{
+				"type": "uint256",
+				"name": "amountCalculated",
+				"internalType": "uint256"
+			}
+		],
+		"name": "swap",
+		"inputs": [
+			{
+				"type": "tuple",
+				"name": "singleSwap",
+				"internalType": "struct Router.SingleSwap",
+				"components": [
+					{
+						"type": "address",
+						"name": "tokenIn",
+						"internalType": "address"
+					},
+					{
+						"type": "address",
+						"name": "tokenOut",
+						"internalType": "address"
+					},
+					{
+						"type": "uint256",
+						"name": "amount",
+						"internalType": "uint256"
+					}
+				]
+			},
+			{
+				"type": "tuple",
+				"name": "funds",
+				"internalType": "struct Router.FundManagement",
+				"components": [
+					{
+						"type": "address",
+						"name": "sender",
+						"internalType": "address"
+					},
+					{
+						"type": "address",
+						"name": "recipient",
+						"internalType": "address payable"
+					}
+				]
+			},
+			{
+				"type": "uint256",
+				"name": "limit",
+				"internalType": "uint256"
+			},
+			{
+				"type": "uint256",
+				"name": "deadline",
+				"internalType": "uint256"
+			}
+		]
+	},
+	{
+		"type": "function",
+		"stateMutability": "nonpayable",
+		"outputs": [],
+		"name": "transferOwnership",
+		"inputs": [
+			{
+				"type": "address",
+				"name": "newOwner",
+				"internalType": "address"
+			}
+		]
+	},
+	{
+		"type": "receive",
+		"stateMutability": "payable"
+	}
+]

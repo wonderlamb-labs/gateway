@@ -8,6 +8,7 @@ import { Xdc } from '../../chains/xdc/xdc';
 import { Cosmos } from '../../chains/cosmos/cosmos';
 import { Harmony } from '../../chains/harmony/harmony';
 import { Injective } from '../../chains/injective/injective';
+import { Kava } from '../../chains/kava/kava';
 
 import {
   AddWalletRequest,
@@ -61,6 +62,8 @@ export async function addWallet(
 
   if (req.chain === 'ethereum') {
     connection = Ethereum.getInstance(req.network);
+  } else if (req.chain === 'kava') {
+    connection = Kava.getInstance(req.network);
   } else if (req.chain === 'avalanche') {
     connection = Avalanche.getInstance(req.network);
   } else if (req.chain === 'harmony') {
@@ -219,3 +222,4 @@ export async function getWallets(): Promise<GetWalletResponse[]> {
 
   return responses;
 }
+

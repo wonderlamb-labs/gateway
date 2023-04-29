@@ -1,0 +1,14 @@
+# list the Avalanche networks available to gateway
+networks:
+  mainnet: 
+    chainID: 2222
+    nodeURL: https://evm.kava.io
+    tokenListType: 'FILE'
+    tokenListSource: 'src/chains/kava/kava_tokens_mainnet.json'
+    nativeCurrencySymbol: 'KAVA'
+
+network: 'kava'
+autoGasPrice: true
+manualGasPrice: 30
+gasPricerefreshTime: 60
+gasLimitTransaction: 3000000

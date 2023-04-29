@@ -1,0 +1,127 @@
+{
+  "name": "Kava Tokens",
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "patch": 1
+  },
+  "logoURI": "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png",
+  "keywords": ["kava", "token"],
+  "timestamp": "2022-01-30T00:00:00+00:00",
+  "tags": {
+    "Stablecoin": {
+      "name": "stablecoin",
+      "description": "Tokens that are fixed to an external asset, e.g. the US dollar"
+    },
+    "erc20": {
+      "name": "erc20",
+      "description": "ERC-20 standard tokens"
+    },
+    "wrapped": {
+      "name": "wrapped",
+      "description": "Wrapped token for other coins"
+    },
+    "native": {
+      "name": "native",
+      "description": "Native token of the Kava Blockchain"
+    }
+  },
+  "tokens": [
+    {
+      "value": "wkava",
+      "chainId": 2222,
+      "address": "0xc86c7C0eFbd6A49B35E8714C5f59D99De09A225b",
+      "symbol": "WKAVA",
+      "name": "Wrapped KAVA",
+      "decimals": 18,
+      "logoURL": "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png",
+      "tags": [
+        "erc20", "wrapped"
+      ]
+    },
+    {
+      "value": "kava",
+      "chainId": 2222,
+      "address": "0x0000000000000000000000000000000000000000",
+      "symbol": "KAVA",
+      "name": "KAVA Coin",
+      "decimals": 18,
+      "logoURL": "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png",
+      "tags": [
+        "native"
+      ]
+    },
+    {
+      "value": "wbtc",
+      "chainId": 2222,
+      "address": "0x818ec0A7Fe18Ff94269904fCED6AE3DaE6d6dC0b",
+      "symbol": "WBTC",
+      "name": "Wrapped BTC",
+      "decimals": 8,
+      "logoURL": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg",
+      "tags": [
+        "erc20", "wrapped"
+      ]
+    },
+    {
+      "value": "weth",
+      "chainId": 2222,
+      "address": "0xE3F5a90F9cb311505cd691a46596599aA1A0AD7D",
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "decimals": 18,
+      "logoURL": "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
+      "tags": [
+        "wrapped", "erc20"
+      ]
+    },
+    {
+      "value": "dai",
+      "chainId": 2222,
+      "address": "0x765277EebeCA2e31912C9946eAe1021199B39C61",
+      "symbol": "DAI",
+      "name": "DAI Coin",
+      "decimals": 18,
+      "logoURL": "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png",
+      "tags": [
+        "stablecoin", "erc20"
+      ]
+    },
+    {
+      "value": "busd",
+      "chainId": 2222,
+      "address": "0x332730a4F6E03D9C55829435f10360E13cfA41Ff",
+      "symbol": "BUSD",
+      "name": "BUSD Coin",
+      "decimals": 18,
+      "logoURL": "https://cryptologos.cc/logos/binance-usd-busd-logo.png",
+      "tags": [
+        "stablecoin", "erc20"
+      ]
+    },
+    {
+      "value": "usdc",
+      "chainId": 2222,
+      "address": "0xfA9343C3897324496A05fC75abeD6bAC29f8A40f",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "decimals": 6,
+      "logoURL": "\thttps://cryptologos.cc/logos/usd-coin-usdc-logo.svg",
+      "tags": [
+        "stablecoin", "erc20"
+      ]
+    },
+    {
+      "value": "usdt",
+      "chainId": 2222,
+      "address": "0xB44a9B6905aF7c801311e8F4E76932ee959c663C",
+      "symbol": "USDT",
+      "name": "Tether USD",
+      "decimals": 6,
+      "logoURL": "https://cryptologos.cc/logos/tether-usdt-logo.svg",
+      "tags": [
+        "stablecoin", "erc20"
+      ]
+    }
+  ]
+}

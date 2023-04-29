@@ -47,6 +47,11 @@ export const validatePrivateKey: Validator = mkSelectingValidator(
       invalidEthPrivateKeyError,
       (val) => typeof val === 'string' && isEthPrivateKey(val)
     ),
+    kava: mkValidator(
+      'privateKey',
+      invalidEthPrivateKeyError,
+      (val) => typeof val === 'string' && isEthPrivateKey(val)
+    ),
     cronos: mkValidator(
       'privateKey',
       invalidEthPrivateKeyError,
@@ -97,7 +102,7 @@ export const validatePrivateKey: Validator = mkSelectingValidator(
 );
 
 export const invalidChainError: string =
-  'chain must be "ethereum", "avalanche", "near", "harmony", "cosmos", "binance-smart-chain" or "injective"';
+  'chain must be "kava", "ethereum", "avalanche", "near", "harmony", "cosmos", "binance-smart-chain" or "injective"';
 
 export const invalidNetworkError: string =
   'expected a string for the network key';
@@ -116,6 +121,7 @@ export const validateChain: Validator = mkValidator(
     typeof val === 'string' &&
     (val === 'ethereum' ||
       val === 'avalanche' ||
+      val === 'kava' ||
       val === 'polygon' ||
       val === 'xdc' ||
       val === 'near' ||
@@ -169,3 +175,4 @@ export const validateWalletSignRequest: RequestValidator = mkRequestValidator([
   validateNetwork,
   validateMessage,
 ]);
+

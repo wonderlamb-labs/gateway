@@ -12,6 +12,14 @@ configurations:
     configurationPath: harmony.yml
     schemaPath: harmony-schema.json
 
+  $namespace kava:
+    configurationPath: kava.yml
+    schemaPath: harmony-schema.json
+
+  $namespace gamut:
+    configurationPath: gamut.yml
+    schemaPath: gamut-schema.json
+
   $namespace avalanche:
     configurationPath: avalanche.yml
     schemaPath: ethereum-schema.json
@@ -107,3 +115,4 @@ configurations:
   $namespace zigzag:
     configurationPath: zigzag.yml
     schemaPath: zigzag-schema.json
+

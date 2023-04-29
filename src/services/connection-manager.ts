@@ -4,8 +4,10 @@ import { Ethereum } from '../chains/ethereum/ethereum';
 import { BinanceSmartChain } from '../chains/binance-smart-chain/binance-smart-chain';
 import { Harmony } from '../chains/harmony/harmony';
 import { Polygon } from '../chains/polygon/polygon';
+import { Kava } from '../chains/kava/kava';
 import { Xdc } from '../chains/xdc/xdc';
 import { MadMeerkat } from '../connectors/mad_meerkat/mad_meerkat';
+import { Gamut } from '../connectors/gamut/gamut';
 import { Openocean } from '../connectors/openocean/openocean';
 import { Pangolin } from '../connectors/pangolin/pangolin';
 import { Perp } from '../connectors/perp/perp';
@@ -59,6 +61,7 @@ export async function getChain<T>(
   else if (chain === 'avalanche')
     chainInstance = Avalanche.getInstance(network);
   else if (chain === 'polygon') chainInstance = Polygon.getInstance(network);
+  else if (chain === 'kava') chainInstance = Kava.getInstance(network);
   else if (chain === 'xdc') chainInstance = Xdc.getInstance(network);
   else if (chain === 'harmony') chainInstance = Harmony.getInstance(network);
   else if (chain === 'near') chainInstance = Near.getInstance(network);
@@ -121,6 +124,8 @@ export async function getConnector<T>(
     connector === 'uniswapLP'
   ) {
     connectorInstance = UniswapLP.getInstance(chain, network);
+  } else if (chain === 'kava' && connector === 'gamut') {
+    connectorInstance = Gamut.getInstance(chain, network);
   } else if (chain === 'ethereum' && connector === 'perp') {
     connectorInstance = Perp.getInstance(chain, network, address);
   } else if (chain === 'avalanche' && connector === 'pangolin') {
@@ -163,3 +168,4 @@ export async function getConnector<T>(
 
   return connectorInstance as Connector<T>;
 }
+
