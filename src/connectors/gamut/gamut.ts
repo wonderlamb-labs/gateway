@@ -1,4 +1,5 @@
 // @ts-nocheck
+import hedgeFactoryABI from "../gamut/sdk/abi/hedgeFactory";
 import { percentRegexp } from '../../services/config-manager-v2';
 import { UniswapishPriceError } from '../../services/error-handler';
 import {
@@ -21,23 +22,14 @@ import {
   Fetcher,
   Pair
 } from '@pangolindex/sdk';
-import {
-  getTokenBalance,
-  getPoolAddress,
-  getPoolData,
-  swapTokens,
-  batchSwapTokens,
-  tokenApproval,
-  approveToken,
-  getSwapFeePercent,
-  calculateSwap,
-  calcOutput,
-  getMiddleToken
-} from "./sdk/gamut-sdk";
-
+import { Pair as SdkPair } from "./sdk/entities/pair";
+import { Token as SdkToken } from "./sdk/entities/token"
+import { Fetcher as SdkFetcher } from "./sdk/fetcher";
+import { ChainId, defaultTokenList } from "./sdk/constants";
 import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
+import { BaseProvider } from "@ethersproject/providers";
 
 export class Gamut implements Uniswapish {
   private static _instances: { [name: string]: Gamut };
@@ -173,18 +165,32 @@ export class Gamut implements Uniswapish {
       `Fetching pair data for ${baseToken.address}-${quoteToken.address}.`
     );
 
-    const pairAddress = await getPoolAddress(this.kava.provider, baseToken.address, quoteToken.address)
-    const poolData = await getPoolData(this.kava.provider, pairAddress)
-    console.log(poolData)
-    
-    const pair: Pair = await Fetcher.fetchPairData(
-      baseToken,
-      quoteToken,
+    let baseTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+      baseToken.chainId,
+      baseToken.address,
+      this.kava.provider,
+      baseToken.symbol,
+      baseToken.name
+    )
+
+
+    let quoteTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+      quoteToken.chainId,
+      quoteToken.address,
+      this.kava.provider,
+      quoteToken.symbol,
+      quoteToken.name
+    )
+
+    const pair: SdkPair = await SdkFetcher.fetchPairData(
+      baseTokenDetails,
+      quoteTokenDetails,
       this.kava.provider
-    );
+    )
+
 
     const trades: Trade[] = Trade.bestTradeExactIn(
-      [pair],
+      [pair as Pair],
       nativeTokenAmount,
       quoteToken,
       { maxHops: 1 }
