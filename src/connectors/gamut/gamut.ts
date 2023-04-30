@@ -232,13 +232,32 @@ export class Gamut implements Uniswapish {
     logger.info(
       `Fetching pair data for ${quoteToken.address}-${baseToken.address}.`
     );
-    const pair: Pair = await Fetcher.fetchPairData(
-      quoteToken,
-      baseToken,
+
+    let baseTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+      baseToken.chainId,
+      baseToken.address,
+      this.kava.provider,
+      baseToken.symbol,
+      baseToken.name
+    )
+
+
+    let quoteTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+      quoteToken.chainId,
+      quoteToken.address,
+      this.kava.provider,
+      quoteToken.symbol,
+      quoteToken.name
+    )
+
+    const pair: SdkPair = await SdkFetcher.fetchPairData(
+      baseTokenDetails,
+      quoteTokenDetails,
       this.kava.provider
-    );
+    )
+    
     const trades: Trade[] = Trade.bestTradeExactOut(
-      [pair],
+      [pair as Pair],
       quoteToken,
       nativeTokenAmount,
       { maxHops: 1 }
