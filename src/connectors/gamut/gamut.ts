@@ -14,17 +14,14 @@ import { isFractionString } from '../../services/validators';
 import { GamutConfig } from './gamut.config';
 import routerAbi from './gamut_abi.json';
 import {
-  Token,
+  Token ,
   Percent,
-  TokenAmount,
-  Trade,
+  TokenAmount ,
+  Trade as SdkTrade,
   Router,
-  Fetcher,
-  Pair
-} from '@pangolindex/sdk';
-import { Pair as SdkPair } from "./sdk/entities/pair";
-import { Token as SdkToken } from "./sdk/entities/token"
-import { Fetcher as SdkFetcher } from "./sdk/fetcher";
+  Fetcher as SdkFetcher,
+  Pair as SdkPair
+} from "./sdk";
 import { ChainId, defaultTokenList } from "./sdk/constants";
 import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
@@ -165,7 +162,7 @@ export class Gamut implements Uniswapish {
       `Fetching pair data for ${baseToken.address}-${quoteToken.address}.`
     );
 
-    let baseTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+    let baseTokenDetails: Token = await SdkFetcher.fetchTokenData(
       baseToken.chainId,
       baseToken.address,
       this.kava.provider,
@@ -174,7 +171,7 @@ export class Gamut implements Uniswapish {
     )
 
 
-    let quoteTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+    let quoteTokenDetails: Token = await SdkFetcher.fetchTokenData(
       quoteToken.chainId,
       quoteToken.address,
       this.kava.provider,
@@ -188,13 +185,13 @@ export class Gamut implements Uniswapish {
       this.kava.provider
     )
 
-
-    const trades: Trade[] = Trade.bestTradeExactIn(
+    const trades: Trade[] = SdkTrade.bestTradeExactIn(
       [pair as Pair],
       nativeTokenAmount,
       quoteToken,
       { maxHops: 1 }
     );
+
     if (!trades || trades.length === 0) {
       throw new UniswapishPriceError(
         `priceSwapIn: no trade pair found for ${baseToken} to ${quoteToken}.`
@@ -233,7 +230,7 @@ export class Gamut implements Uniswapish {
       `Fetching pair data for ${quoteToken.address}-${baseToken.address}.`
     );
 
-    let baseTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+    let baseTokenDetails: Token = await SdkFetcher.fetchTokenData(
       baseToken.chainId,
       baseToken.address,
       this.kava.provider,
@@ -242,7 +239,7 @@ export class Gamut implements Uniswapish {
     )
 
 
-    let quoteTokenDetails: SdkToken = await SdkFetcher.fetchTokenData(
+    let quoteTokenDetails: Token = await SdkFetcher.fetchTokenData(
       quoteToken.chainId,
       quoteToken.address,
       this.kava.provider,
@@ -256,7 +253,7 @@ export class Gamut implements Uniswapish {
       this.kava.provider
     )
     
-    const trades: Trade[] = Trade.bestTradeExactOut(
+    const trades: SdkTrade[] = SdkTrade.bestTradeExactOut(
       [pair as Pair],
       quoteToken,
       nativeTokenAmount,
@@ -283,9 +280,9 @@ export class Gamut implements Uniswapish {
    * @param wallet Wallet
    * @param trade Expected trade
    * @param gasPrice Base gas price, for pre-EIP1559 transactions
-   * @param pangolinRouter smart contract address
+   * @param safeModule .... gnosis safe module fo gamut
    * @param ttl How long the swap is valid before expiry, in seconds
-   * @param abi Router contract ABI
+   * @param abi ... safe module abi
    * @param gasLimit Gas limit
    * @param nonce (Optional) EVM transaction nonce
    * @param maxFeePerGas (Optional) Maximum total fee per gas you want to pay
@@ -295,7 +292,7 @@ export class Gamut implements Uniswapish {
     wallet: Wallet,
     trade: Trade,
     gasPrice: number,
-    pangolinRouter: string,
+    safeModule: string,
     ttl: number,
     abi: ContractInterface,
     gasLimit: number,
@@ -309,33 +306,8 @@ export class Gamut implements Uniswapish {
       recipient: wallet.address,
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
+    console.log("Result:: ", result)
 
-    const contract = new Contract(pangolinRouter, abi, wallet);
-    return this.kava.nonceManager.provideNonce(
-      nonce,
-      wallet.address,
-      async (nextNonce) => {
-        let tx: ContractTransaction;
-        if (maxFeePerGas || maxPriorityFeePerGas) {
-          tx = await contract[result.methodName](...result.args, {
-            gasLimit: gasLimit,
-            value: result.value,
-            nonce: nextNonce,
-            maxFeePerGas,
-            maxPriorityFeePerGas,
-          });
-        } else {
-          tx = await contract[result.methodName](...result.args, {
-            gasPrice: (gasPrice * 1e9).toFixed(0),
-            gasLimit: gasLimit.toFixed(0),
-            value: result.value,
-            nonce: nextNonce,
-          });
-        }
-
-        logger.info(JSON.stringify(tx));
-        return tx;
-      }
-    );
+    throw new Error("Unimpl")
   }
 }

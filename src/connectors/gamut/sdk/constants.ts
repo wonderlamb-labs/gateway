@@ -28,7 +28,13 @@ export const defaultTokenList = {
 		{ value: "kava", chainId: 2222, address: "0x0000000000000000000000000000000000000000", symbol: "KAVA", name: "KAVA Coin", decimals: 18, logoURL: "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png", tags: ["Coin"] },
 		{ value: "busd", chainId: 2222, address: "0x332730a4F6E03D9C55829435f10360E13cfA41Ff", symbol: "BUSD", name: "BUSD Coin", decimals: 18, logoURL: "https://cryptologos.cc/logos/binance-usd-busd-logo.png", tags: ["stablecoin"] },
 		{ value: "wkava", chainId: 2222, address: "0xc86c7C0eFbd6A49B35E8714C5f59D99De09A225b", symbol: "WKAVA", name: "Wrapped KAVA", decimals: 18, logoURL: "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png", tags: ["Coin"] },
+		{ value: "usdc", chainId: 2222, address: "0xfa9343c3897324496a05fc75abed6bac29f8a40f", symbol: "USDC", name: "USD Coin", decimals: 6, logoURL: "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png", tags: ["stablecoin"] },
 	]
+}
+
+// TODOO : FILL
+export const AddressPoolMap = {
+	"0x332730a4F6E03D9C55829435f10360E13cfA41Ff-0xc86c7C0eFbd6A49B35E8714C5f59D99De09A225b":"0x6be57618c8832ad25cceadf2745d5c92de7ab7b2"
 }
 
 export const poolList = {
