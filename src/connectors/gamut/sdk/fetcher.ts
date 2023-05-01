@@ -14,15 +14,6 @@ let TOKEN_DECIMALS_CACHE: { [chainId: number]: { [address: string]: number } } =
   }
 }
 
-export abstract class Temp {
-
-  private constructor() { }
-
-  public static helloWorld() {
-    return "Hello World"
-  }
-
-}
 
 /**
  * Contains methods for constructing instances of pairs and tokens from on-chain data.
@@ -48,20 +39,20 @@ export abstract class Fetcher {
     symbol?: string,
     name?: string
   ): Promise<Token> {
-    
+
     const parsedDecimals =
       typeof TOKEN_DECIMALS_CACHE?.[chainId]?.[address] === 'number'
         ? TOKEN_DECIMALS_CACHE[chainId][address]
         : await new Contract(address, ERC20, provider).decimals().then((decimals: number): number => {
-            TOKEN_DECIMALS_CACHE = {
-              ...TOKEN_DECIMALS_CACHE,
-              [chainId]: {
-                ...TOKEN_DECIMALS_CACHE?.[chainId],
-                [address]: decimals
-              }
+          TOKEN_DECIMALS_CACHE = {
+            ...TOKEN_DECIMALS_CACHE,
+            [chainId]: {
+              ...TOKEN_DECIMALS_CACHE?.[chainId],
+              [address]: decimals
             }
-            return decimals
-          })
+          }
+          return decimals
+        })
     return new Token(chainId, address, parsedDecimals as number, symbol, name)
   }
 
@@ -77,8 +68,10 @@ export abstract class Fetcher {
     provider: any //= getDefaultProvider(getNetwork(tokenA.chainId))
   ): Promise<Pair> {
     invariant(tokenA.chainId === tokenB.chainId, 'CHAIN_ID')
-    // const address = await Pair.getPoolAddress(provider, tokenA.address, tokenB.address);
     const addr = Pair.getAddress(tokenA, tokenB)
+    if (addr === null || addr === undefined ) {
+      throw new Error("Invalid pair address")
+    }
     const [reserves0, reserves1] = await new Contract(addr, GamutPairAbi, provider).getPoolBalancesAndChangeBlock()
     const balances = tokenA.sortsBefore(tokenB) ? [reserves0, reserves1] : [reserves1, reserves0]
     return new Pair(new TokenAmount(tokenA, balances[0]), new TokenAmount(tokenB, balances[1]))

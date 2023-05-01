@@ -14,15 +14,15 @@ import { isFractionString } from '../../services/validators';
 import { GamutConfig } from './gamut.config';
 import routerAbi from './gamut_abi.json';
 import {
-  Token ,
+  Token,
   Percent,
-  TokenAmount ,
+  TokenAmount,
   Trade as SdkTrade,
   Router,
   Fetcher as SdkFetcher,
   Pair as SdkPair
 } from "./sdk";
-import { ChainId, defaultTokenList } from "./sdk/constants";
+import { ChainId, defaultTokenList, ROUTER, ROUTER_ADDRESS } from "./sdk/constants";
 import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
@@ -252,7 +252,7 @@ export class Gamut implements Uniswapish {
       quoteTokenDetails,
       this.kava.provider
     )
-    
+
     const trades: SdkTrade[] = SdkTrade.bestTradeExactOut(
       [pair as Pair],
       quoteToken,
@@ -306,8 +306,34 @@ export class Gamut implements Uniswapish {
       recipient: wallet.address,
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
-    console.log("Result:: ", result)
 
-    throw new Error("Unimpl")
+    const contract = new Contract(ROUTER_ADDRESS, abi, wallet);
+
+    return this.kava.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        let tx: ContractTransaction;
+        if (maxFeePerGas || maxPriorityFeePerGas) {
+          tx = await contract[result.methodName](...result.args, {
+            gasLimit: gasLimit,
+            value: result.value,
+            nonce: nextNonce,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+          });
+        } else {
+          tx = await contract[result.methodName](...result.args, {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          });
+        }
+
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
   }
 }

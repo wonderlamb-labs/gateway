@@ -46,7 +46,7 @@ export class Pair {
   public static getAddress(tokenA: Token, tokenB: Token): string {
     const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
     const key: string = composeKey(token0, token1)
-    return AddressPoolMap[key as keyof typeof AddressPoolMap ];
+    return AddressPoolMap[key as keyof typeof AddressPoolMap];
   }
 
   public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount, ) {
