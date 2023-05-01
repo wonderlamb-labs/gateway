@@ -8,7 +8,7 @@ import JSBI from 'jsbi'
 
 import {
   BigintIsh,
-  FACTORY_ADDRESS_MAP,
+  // FACTORY_ADDRESS_MAP,
   // INIT_CODE_HASH_MAP,
   MINIMUM_LIQUIDITY,
   ZERO,
@@ -19,12 +19,12 @@ import {
   ChainId,
   AddressPoolMap 
 } from '../constants'
-import HedgeFactoryAbi from "../abis/HedgeFactory.json";
+// import HedgeFactoryAbi from "../abis/HedgeFactory.json";
 import { sqrt, parseBigintIsh } from '../utils'
 import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
 import { Token } from './token'
-import { ethers } from 'ethers'
-import { BaseProvider } from '@ethersproject/providers'
+// import { ethers } from 'ethers'
+// import { BaseProvider } from '@ethersproject/providers'
 
 // let PAIR_ADDRESS_CACHE: { [key: string]: string } = {}
 
@@ -34,13 +34,13 @@ export class Pair {
   public readonly liquidityToken: Token
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
 
-  public static async getPoolAddress(provider: BaseProvider, tokenA: string, tokenB: string): Promise<string> {
-    const chainId = 2222;
-    const hedgeFactory = FACTORY_ADDRESS_MAP[chainId];
-    const contract = new ethers.Contract(hedgeFactory, HedgeFactoryAbi, provider);
-    const pairAddr: string = await contract.getPool(tokenA, tokenB);
-    return pairAddr;
-  }
+  // public static async getPoolAddress(provider: BaseProvider, tokenA: string, tokenB: string): Promise<string> {
+  //   const chainId = 2222;
+  //   const hedgeFactory = FACTORY_ADDRESS_MAP[chainId];
+  //   const contract = new ethers.Contract(hedgeFactory, HedgeFactoryAbi, provider);
+  //   const pairAddr: string = await contract.getPool(tokenA, tokenB);
+  //   return pairAddr;
+  // }
 
   public static getAddress(tokenA: Token, tokenB: Token): string {
     const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks

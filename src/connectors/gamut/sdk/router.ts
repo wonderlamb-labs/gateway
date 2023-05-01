@@ -1,5 +1,5 @@
 import invariant from 'tiny-invariant'
-import { validateAndParseAddress } from './utils'
+// import { validateAndParseAddress } from './utils'
 import { CurrencyAmount, ETHER, Percent, Trade } from './entities'
 
 /**
@@ -79,7 +79,7 @@ export abstract class Router {
     invariant(!(etherIn && etherOut), 'ETHER_IN_OUT')
     invariant(!('ttl' in options) || options.ttl > 0, 'TTL')
 
-    const to: string = validateAndParseAddress(options.recipient)
+    // const to: string = validateAndParseAddress(options.recipient)
     const amountIn: string = toHex(trade.maximumAmountIn(options.allowedSlippage))
 
     let methodName: string = ""
@@ -94,16 +94,15 @@ export abstract class Router {
     const pathlen = path.length
 
     if (pathlen === 2) {
-      methodName = "swap"
+      methodName = "safeSwap"
       args = [
         [path[0], path[1], amountIn],
-        [to, to],
         ZERO_HEX,
         deadline
       ]
       value = ZERO_HEX;
     } else if (pathlen > 2) {
-      methodName = "batchSwap"
+      methodName = "safeSwapBatch"
       let swapsParam = [];
 
       for (let index = 0; index < pathlen; index++) {
@@ -116,7 +115,6 @@ export abstract class Router {
       args = [
         swapsParam,
         path,
-        [to, to],
         new Array<string>(pathlen).fill(ZERO_HEX),
         deadline
       ]
