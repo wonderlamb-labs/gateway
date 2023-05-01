@@ -32,7 +32,6 @@ const composeKey = (token0: Token, token1: Token) => `${token0.address}-${token1
 
 export class Pair {
   public readonly liquidityToken: Token
-  public readonly pairAddr: string
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
 
   public static async getPoolAddress(provider: BaseProvider, tokenA: string, tokenB: string): Promise<string> {
