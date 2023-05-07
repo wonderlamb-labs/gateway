@@ -12,7 +12,7 @@ import {
 } from 'ethers';
 import { isFractionString } from '../../services/validators';
 import { GamutConfig } from './gamut.config';
-import routerAbi from './gamut_abi.json';
+import routerAbi from './safe_module_abi.json';
 import {
   Token,
   Percent,
@@ -20,9 +20,9 @@ import {
   Trade as SdkTrade,
   Router,
   Fetcher as SdkFetcher,
-  Pair as SdkPair
+  Pair as SdkPair 
 } from "./sdk";
-import { ChainId, defaultTokenList, ROUTER, ROUTER_ADDRESS } from "./sdk/constants";
+import { ChainId, defaultTokenList, ROUTER, ROUTER_ADDRESS, SAFE_MODULE_ADDRESS } from "./sdk/constants";
 import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
@@ -253,6 +253,8 @@ export class Gamut implements Uniswapish {
       this.kava.provider
     )
 
+    console.log(JSON.stringify(pair))
+
     const trades: SdkTrade[] = SdkTrade.bestTradeExactOut(
       [pair as Pair],
       quoteToken,
@@ -307,7 +309,7 @@ export class Gamut implements Uniswapish {
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
 
-    const contract = new Contract(ROUTER_ADDRESS, abi, wallet);
+    const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
 
     return this.kava.nonceManager.provideNonce(
       nonce,
