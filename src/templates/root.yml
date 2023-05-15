@@ -14,7 +14,7 @@ configurations:
 
   $namespace kava:
     configurationPath: kava.yml
-    schemaPath: harmony-schema.json
+    schemaPath: kava-schema.json
 
   $namespace gamut:
     configurationPath: gamut.yml

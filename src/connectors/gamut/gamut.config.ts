@@ -2,7 +2,7 @@ import { ConfigManagerV2 } from '../../services/config-manager-v2';
 import { AvailableNetworks } from '../../services/config-manager-types';
 
 export namespace GamutConfig {
-  export interface NetworkConfig {
+  export interface ExchangeConfig {
     allowedSlippage: string;
     gasLimitEstimate: number;
     ttl: number;
@@ -11,7 +11,7 @@ export namespace GamutConfig {
     availableNetworks: Array<AvailableNetworks>;
   }
 
-  export const config: NetworkConfig = {
+  export const config: ExchangeConfig = {
     allowedSlippage: ConfigManagerV2.getInstance().get(
       'gamut.allowedSlippage'
     ),

@@ -52,6 +52,7 @@ export const validateSpender: Validator = mkValidator(
       val === 'perp' ||
       val === 'uniswapLP' ||
       val === 'pangolin' ||
+      val === 'gamut' ||
       val === 'traderjoe' ||
       val === 'sushiswap' ||
       val === 'viperswap' ||

@@ -7,6 +7,7 @@ import { DefikingdomsConfig } from './defikingdoms/defikingdoms.config';
 import { MadMeerkatConfig } from './mad_meerkat/mad_meerkat.config';
 import { OpenoceanConfig } from './openocean/openocean.config';
 import { PangolinConfig } from './pangolin/pangolin.config';
+import { GamutConfig } from './gamut/gamut.config';
 import { PerpConfig } from './perp/perp.config';
 import { QuickswapConfig } from './quickswap/quickswap.config';
 import { SushiswapConfig } from './sushiswap/sushiswap.config';
@@ -101,6 +102,11 @@ export namespace ConnectorsRoutes {
             name: 'pancakeswap',
             trading_type: PancakeSwapConfig.config.tradingTypes,
             available_networks: PancakeSwapConfig.config.availableNetworks,
+          },
+          {
+            name: 'gamut',
+            trading_type: GamutConfig.config.tradingTypes,
+            available_networks: GamutConfig.config.availableNetworks,
           },
           {
             name: 'injective',
