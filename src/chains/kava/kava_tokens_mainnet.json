@@ -40,18 +40,6 @@
       ]
     },
     {
-      "value": "kava",
-      "chainId": 2222,
-      "address": "0x0000000000000000000000000000000000000000",
-      "symbol": "KAVA",
-      "name": "KAVA Coin",
-      "decimals": 18,
-      "logoURL": "https://assets-cdn.trustwallet.com/blockchains/kava/info/logo.png",
-      "tags": [
-        "native"
-      ]
-    },
-    {
       "value": "wbtc",
       "chainId": 2222,
       "address": "0x818ec0A7Fe18Ff94269904fCED6AE3DaE6d6dC0b",
