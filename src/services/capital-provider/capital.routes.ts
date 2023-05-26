@@ -7,14 +7,14 @@ import {
   addWalletWithCapitalProvider,
   removeWallet,
   getWalletsWithCapitalProviders,
-} from './wallet.controllers';
+} from './capital.controllers';
 
 import {
   AddWalletWithCapitalProviderRequest,
   AddWalletWithCapitalProviderResponse,
   RemoveWalletRequest,
   GetWalletWithCapitalProviderResponse,
-} from './wallet.requests';
+} from './capital.requests';
 
 import {
   validateAddWalletRequest,

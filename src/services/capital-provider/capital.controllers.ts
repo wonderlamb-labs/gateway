@@ -15,7 +15,7 @@ import {
   AddWalletWithCapitalProviderResponse,
   GetWalletWithCapitalProviderResponse,
   RemoveWalletRequest,
-} from './wallet.requests';
+} from './capital.requests';
 
 import { ConfigManagerCertPassphrase } from '../config-manager-cert-passphrase';
 
