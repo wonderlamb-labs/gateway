@@ -1,30 +1,25 @@
-export interface AddWalletRequest {
+export interface AddWalletWithCapitalProviderRequest {
   chain: string;
   network: string;
   privateKey: string;
+  capitalProviderAddress: string;
   address?: string;
   accountId?: number;
 }
 
-export interface AddWalletResponse {
-  address: string;
-}
-
-export interface WalletSignResponse {
-  signature: string;
-}
-
 export interface RemoveWalletRequest {
   chain: string;
+  network: string;
   address: string;
 }
 
-export interface WalletSignRequest extends RemoveWalletRequest {
-  network: string;
-  message: string;
+export interface AddWalletWithCapitalProviderResponse {
+  address: string;
+  capitalProviderAddress: string;
 }
 
-export interface GetWalletResponse {
+export interface GetWalletWithCapitalProviderResponse {
   chain: string;
   walletAddresses: string[];
+  capitalProviderAddresses: string[];
 }

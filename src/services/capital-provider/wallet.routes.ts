@@ -4,25 +4,21 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../error-handler';
 
 import {
-  addWallet,
+  addWalletWithCapitalProvider,
   removeWallet,
-  getWallets,
-  signMessage,
+  getWalletsWithCapitalProviders,
 } from './wallet.controllers';
 
 import {
-  AddWalletRequest,
-  AddWalletResponse,
+  AddWalletWithCapitalProviderRequest,
+  AddWalletWithCapitalProviderResponse,
   RemoveWalletRequest,
-  GetWalletResponse,
-  WalletSignRequest,
-  WalletSignResponse,
+  GetWalletWithCapitalProviderResponse,
 } from './wallet.requests';
 
 import {
   validateAddWalletRequest,
   validateRemoveWalletRequest,
-  validateWalletSignRequest,
 } from './wallet.validators';
 
 export namespace WalletRoutes {
@@ -30,8 +26,8 @@ export namespace WalletRoutes {
 
   router.get(
     '/',
-    asyncHandler(async (_req, res: Response<GetWalletResponse[], {}>) => {
-      const response = await getWallets();
+    asyncHandler(async (_req, res: Response<GetWalletWithCapitalProviderResponse[], {}>) => {
+      const response = await getWalletsWithCapitalProviders();
       res.status(200).json(response);
     })
   );
@@ -40,11 +36,11 @@ export namespace WalletRoutes {
     '/add',
     asyncHandler(
       async (
-        req: Request<{}, {}, AddWalletRequest>,
-        res: Response<AddWalletResponse, {}>
+        req: Request<{}, {}, AddWalletWithCapitalProviderRequest>,
+        res: Response<AddWalletWithCapitalProviderResponse, {}>
       ) => {
         validateAddWalletRequest(req.body);
-        res.status(200).json(await addWallet(req.body));
+        res.status(200).json(await addWalletWithCapitalProvider(req.body));
       }
     )
   );
@@ -63,18 +59,4 @@ export namespace WalletRoutes {
     )
   );
 
-  router.get(
-    '/sign',
-    asyncHandler(
-      async (
-        req: Request<{}, {}, WalletSignRequest>,
-        res: Response<WalletSignResponse, {}>
-      ) => {
-        validateWalletSignRequest(req.query);
-        res
-          .status(200)
-          .json(await signMessage(<WalletSignRequest>(<unknown>req.query)));
-      }
-    )
-  );
 }

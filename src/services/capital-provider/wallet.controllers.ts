@@ -11,12 +11,10 @@ import { Injective } from '../../chains/injective/injective';
 import { Kava } from '../../chains/kava/kava';
 
 import {
-  AddWalletRequest,
-  AddWalletResponse,
+  AddWalletWithCapitalProviderRequest,
+  AddWalletWithCapitalProviderResponse,
+  GetWalletWithCapitalProviderResponse,
   RemoveWalletRequest,
-  GetWalletResponse,
-  WalletSignRequest,
-  WalletSignResponse,
 } from './wallet.requests';
 
 import { ConfigManagerCertPassphrase } from '../config-manager-cert-passphrase';
@@ -32,8 +30,7 @@ import {
 } from '../error-handler';
 import { EthereumBase } from '../../chains/ethereum/ethereum-base';
 import { Near } from '../../chains/near/near';
-import { getChain } from '../connection-manager';
-import { Ethereumish } from '../common-interfaces';
+import { SafeModule } from '../../connectors/safe-module/safe_module';
 
 export function convertXdcAddressToEthAddress(publicKey: string): string {
   return publicKey.length === 43 && publicKey.slice(0, 3) === 'xdc'
@@ -49,9 +46,9 @@ export async function mkdirIfDoesNotExist(path: string): Promise<void> {
   }
 }
 
-export async function addWallet(
-  req: AddWalletRequest
-): Promise<AddWalletResponse> {
+export async function addWalletWithCapitalProvider(
+  req: AddWalletWithCapitalProviderRequest
+): Promise<AddWalletWithCapitalProviderResponse> {
   const passphrase = ConfigManagerCertPassphrase.readPassphrase();
   if (!passphrase) {
     throw new Error('There is no passphrase');
@@ -153,6 +150,14 @@ export async function addWallet(
     if (address === undefined || encryptedPrivateKey === undefined) {
       throw new Error('ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_CODE');
     }
+
+    const safeModule = SafeModule.getInstance(req.chain, req.network)
+    const isWalletAllowed: boolean = await safeModule.isWalletAllowedForCapitalProvider(address, address);
+
+    if (isWalletAllowed !== false ) {
+      throw new Error(`${req.capitalProviderAddress} has not allowed ${address} to make trades.`);
+    }
+
   } catch (_e: unknown) {
     throw new HttpException(
       500,
@@ -161,22 +166,14 @@ export async function addWallet(
     );
   }
   const path = `${walletPath}/${req.chain}`;
+
+  const walletWithCapitalProvider = {
+    wallet: encryptedPrivateKey,
+    capitalProvider: req.capitalProviderAddress
+  }
   await mkdirIfDoesNotExist(path);
-  await fse.writeFile(`${path}/${address}.json`, encryptedPrivateKey);
-  return { address };
-}
-
-// if the file does not exist, this should not fail
-export async function removeWallet(req: RemoveWalletRequest): Promise<void> {
-  await fse.remove(`./conf/wallets/${req.chain}/${req.address}.json`);
-}
-
-export async function signMessage(
-  req: WalletSignRequest
-): Promise<WalletSignResponse> {
-  const chain: Ethereumish = await getChain(req.chain, req.network);
-  const wallet = await chain.getWallet(req.address);
-  return { signature: await wallet.signMessage(req.message) };
+  await fse.writeFile(`${path}/${address}.json`, walletWithCapitalProvider);
+  return { address, capitalProviderAddress: req.capitalProviderAddress };
 }
 
 export async function getDirectories(source: string): Promise<string[]> {
@@ -202,19 +199,25 @@ export async function getJsonFiles(source: string): Promise<string[]> {
     .map((f) => f.name);
 }
 
-export async function getWallets(): Promise<GetWalletResponse[]> {
+// if the file does not exist, this should not fail
+export async function removeWallet(req: RemoveWalletRequest): Promise<void> {
+  await fse.remove(`./conf/wallets/${req.chain}/${req.address}.json`);
+}
+
+export async function getWalletsWithCapitalProviders(): Promise<GetWalletWithCapitalProviderResponse[]> {
   const chains = await getDirectories(walletPath);
 
-  const responses: GetWalletResponse[] = [];
+  const responses: GetWalletWithCapitalProviderResponse[] = [];
 
   for (const chain of chains) {
     const walletFiles = await getJsonFiles(`${walletPath}/${chain}`);
 
-    const response: GetWalletResponse = { chain, walletAddresses: [] };
+    const response: GetWalletWithCapitalProviderResponse = { chain, walletAddresses: [], capitalProviderAddresses: [] };
 
     for (const walletFile of walletFiles) {
       const address = dropExtension(getLastPath(walletFile));
       response.walletAddresses.push(address);
+      response.capitalProviderAddresses.push(address);
     }
 
     responses.push(response);
@@ -222,4 +225,3 @@ export async function getWallets(): Promise<GetWalletResponse[]> {
 
   return responses;
 }
-
