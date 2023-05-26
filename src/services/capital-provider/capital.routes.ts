@@ -5,21 +5,18 @@ import { asyncHandler } from '../error-handler';
 
 import {
   addWalletWithCapitalProvider,
-  removeWallet,
   getWalletsWithCapitalProviders,
 } from './capital.controllers';
 
 import {
   AddWalletWithCapitalProviderRequest,
   AddWalletWithCapitalProviderResponse,
-  RemoveWalletRequest,
   GetWalletWithCapitalProviderResponse,
 } from './capital.requests';
 
 import {
-  validateAddWalletRequest,
-  validateRemoveWalletRequest,
-} from './wallet.validators';
+  validateAddWalletWithCapitalProviderRequest,
+} from './capital.validators';
 
 export namespace WalletRoutes {
   export const router = Router();
@@ -39,22 +36,8 @@ export namespace WalletRoutes {
         req: Request<{}, {}, AddWalletWithCapitalProviderRequest>,
         res: Response<AddWalletWithCapitalProviderResponse, {}>
       ) => {
-        validateAddWalletRequest(req.body);
+        validateAddWalletWithCapitalProviderRequest(req.body);
         res.status(200).json(await addWalletWithCapitalProvider(req.body));
-      }
-    )
-  );
-
-  router.delete(
-    '/remove',
-    asyncHandler(
-      async (
-        req: Request<{}, {}, RemoveWalletRequest>,
-        res: Response<void, {}>
-      ) => {
-        validateRemoveWalletRequest(req.body);
-        await removeWallet(req.body);
-        res.status(200).json();
       }
     )
   );

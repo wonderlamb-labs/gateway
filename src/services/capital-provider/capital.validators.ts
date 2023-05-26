@@ -158,21 +158,10 @@ export const validateMessage: Validator = mkValidator(
   true
 );
 
-export const validateAddWalletRequest: RequestValidator = mkRequestValidator([
+export const validateAddWalletWithCapitalProviderRequest: RequestValidator = mkRequestValidator([
   validatePrivateKey,
+  validateAddress,
   validateChain,
   validateNetwork,
   validateAccountID,
 ]);
-
-export const validateRemoveWalletRequest: RequestValidator = mkRequestValidator(
-  [validateAddress, validateChain]
-);
-
-export const validateWalletSignRequest: RequestValidator = mkRequestValidator([
-  validateAddress,
-  validateChain,
-  validateNetwork,
-  validateMessage,
-]);
-
