@@ -9,3 +9,4 @@ networks:
 
 autoGasPrice: true
 gasLimitTransaction: 3000000
+manualGasPrice: 1000000000
