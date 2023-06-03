@@ -2,12 +2,14 @@ export interface AddWalletRequest {
   chain: string;
   network: string;
   privateKey: string;
+  capitalProviders?: string[];
   address?: string;
   accountId?: number;
 }
 
 export interface AddWalletResponse {
   address: string;
+  capitalProviders?: string[];
 }
 
 export interface WalletSignResponse {
@@ -27,4 +29,5 @@ export interface WalletSignRequest extends RemoveWalletRequest {
 export interface GetWalletResponse {
   chain: string;
   walletAddresses: string[];
+  capitalProviders: string[][];
 }

@@ -192,10 +192,12 @@ export class EthereumBase {
   async getWallet(address: string): Promise<Wallet> {
     const path = `${walletPath}/${this.chainName}`;
 
-    const encryptedPrivateKey: string = await fse.readFile(
+    const walletFile: string = await fse.readFile(
       `${path}/${address}.json`,
       'utf8'
     );
+
+    const encryptedPrivateKey: string = JSON.stringify(JSON.parse(walletFile).wallet)
 
     const passphrase = ConfigManagerCertPassphrase.readPassphrase();
     if (!passphrase) {
@@ -241,6 +243,21 @@ export class EthereumBase {
     return { value: balance, decimals: decimals };
   }
 
+  // returns the balance for an ERC-20 token
+  async getERC20BalanceAddr(
+    contract: Contract,
+    address: string,
+    decimals: number
+  ): Promise<TokenValue> {
+    logger.info('Requesting balance for address ' + address + '.');
+    const balance: BigNumber = await contract.balanceOf(address);
+    logger.info(
+      `Raw balance of ${contract.address} for ` +
+        `${address}: ${balance.toString()}`
+    );
+    return { value: balance, decimals: decimals };
+  }
+
   // returns the allowance for an ERC-20 token
   async getERC20Allowance(
     contract: Contract,
@@ -256,6 +273,25 @@ export class EthereumBase {
         '.'
     );
     const allowance = await contract.allowance(wallet.address, spender);
+    logger.info(allowance);
+    return { value: allowance, decimals: decimals };
+  }
+
+  // returns the allowance for an ERC-20 token
+  async getERC20AllowanceAddr(
+    contract: Contract,
+    address: string,
+    spender: string,
+    decimals: number
+  ): Promise<TokenValue> {
+    logger.info(
+      'Requesting spender ' +
+        spender +
+        ' allowance for owner ' +
+        address +
+        '.'
+    );
+    const allowance = await contract.allowance(address, spender);
     logger.info(allowance);
     return { value: allowance, decimals: decimals };
   }

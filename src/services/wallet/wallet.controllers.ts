@@ -34,6 +34,7 @@ import { EthereumBase } from '../../chains/ethereum/ethereum-base';
 import { Near } from '../../chains/near/near';
 import { getChain } from '../connection-manager';
 import { Ethereumish } from '../common-interfaces';
+import { SafeModule } from '../../connectors/safe-module/safe_module';
 
 export function convertXdcAddressToEthAddress(publicKey: string): string {
   return publicKey.length === 43 && publicKey.slice(0, 3) === 'xdc'
@@ -100,6 +101,8 @@ export async function addWallet(
     await connection.init();
   }
 
+  console.log(req);
+
   try {
     if (connection instanceof EthereumBase) {
       address = connection.getWalletFromPrivateKey(req.privateKey).address;
@@ -153,6 +156,23 @@ export async function addWallet(
     if (address === undefined || encryptedPrivateKey === undefined) {
       throw new Error('ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_CODE');
     }
+
+    if (req.capitalProviders) {
+      const safeModule = SafeModule.getInstance(req.chain, req.network);
+      for (let capitalProvider in req.capitalProviders) {
+        const isWalletAllowed: boolean =
+          await safeModule.isWalletAllowedForCapitalProvider(address, address);
+
+        if (capitalProvider && !isWalletAllowed) {
+          console.log(
+            `${capitalProvider} has not allowed ${address} to make trades.`
+          );
+          throw new Error(
+            `${capitalProvider} has not allowed ${address} to make trades.`
+          );
+        }
+      }
+    }
   } catch (_e: unknown) {
     throw new HttpException(
       500,
@@ -161,9 +181,18 @@ export async function addWallet(
     );
   }
   const path = `${walletPath}/${req.chain}`;
+
+  const walletWithCapitalProvider = {
+    wallet: JSON.parse(encryptedPrivateKey),
+    capitalProviders: req.capitalProviders,
+  };
+  console.log(walletWithCapitalProvider);
   await mkdirIfDoesNotExist(path);
-  await fse.writeFile(`${path}/${address}.json`, encryptedPrivateKey);
-  return { address };
+  await fse.writeFile(
+    `${path}/${address}.json`,
+    JSON.stringify(walletWithCapitalProvider)
+  );
+  return { address, capitalProviders: req.capitalProviders };
 }
 
 // if the file does not exist, this should not fail
@@ -210,10 +239,29 @@ export async function getWallets(): Promise<GetWalletResponse[]> {
   for (const chain of chains) {
     const walletFiles = await getJsonFiles(`${walletPath}/${chain}`);
 
-    const response: GetWalletResponse = { chain, walletAddresses: [] };
+    const response: GetWalletResponse = {
+      chain,
+      walletAddresses: [],
+      capitalProviders: [],
+    };
 
     for (const walletFile of walletFiles) {
+      console.log(walletFile);
       const address = dropExtension(getLastPath(walletFile));
+
+      const _walletFile: string = await fse.readFile(
+        `${walletPath}/${chain}/${address}.json`,
+        'utf8'
+      );
+
+      const capitalProviderAddresses: string[] =
+        JSON.parse(_walletFile).capitalProviders;
+
+      if (!capitalProviderAddresses) {
+        response.capitalProviders.push([]);
+      } else {
+        response.capitalProviders.push(capitalProviderAddresses);
+      }
       response.walletAddresses.push(address);
     }
 
@@ -222,4 +270,3 @@ export async function getWallets(): Promise<GetWalletResponse[]> {
 
   return responses;
 }
-

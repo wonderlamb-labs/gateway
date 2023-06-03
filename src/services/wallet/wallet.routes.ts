@@ -49,6 +49,10 @@ export namespace WalletRoutes {
     )
   );
 
+  // TODO: Add routes for
+  // * addCapitalProvider
+  // * removeCapitalProvider
+
   router.delete(
     '/remove',
     asyncHandler(
