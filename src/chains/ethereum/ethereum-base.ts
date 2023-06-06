@@ -197,13 +197,28 @@ export class EthereumBase {
       'utf8'
     );
 
-    const encryptedPrivateKey: string = JSON.stringify(JSON.parse(walletFile).wallet)
+    const encryptedPrivateKey: string = JSON.stringify(
+      JSON.parse(walletFile).wallet
+    );
 
     const passphrase = ConfigManagerCertPassphrase.readPassphrase();
     if (!passphrase) {
       throw new Error('missing passphrase');
     }
     return await this.decrypt(encryptedPrivateKey, passphrase);
+  }
+
+  async getWalletCapitalProviders(address: string): Promise<string[]> {
+    const path = `${walletPath}/${this.chainName}`;
+
+    const walletFile: string = await fse.readFile(
+      `${path}/${address}.json`,
+      'utf8'
+    );
+
+    const capitalProviders: string[] = JSON.parse(walletFile).capitalProviders;
+
+    return capitalProviders;
   }
 
   encrypt(privateKey: string, password: string): Promise<string> {
@@ -285,11 +300,7 @@ export class EthereumBase {
     decimals: number
   ): Promise<TokenValue> {
     logger.info(
-      'Requesting spender ' +
-        spender +
-        ' allowance for owner ' +
-        address +
-        '.'
+      'Requesting spender ' + spender + ' allowance for owner ' + address + '.'
     );
     const allowance = await contract.allowance(address, spender);
     logger.info(allowance);

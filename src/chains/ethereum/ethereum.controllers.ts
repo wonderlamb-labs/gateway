@@ -123,19 +123,23 @@ export async function allowances(
 export async function balances(
   ethereumish: Ethereumish,
   req: BalanceRequest
-): Promise<BalanceResponse | string> {
+): Promise<BalanceResponse> {
   const initTime = Date.now();
 
   let wallet: Wallet;
+  let capitalProviders: string[];
   const connector: CLOBish | undefined = req.connector
     ? ((await getConnector(req.chain, req.network, req.connector)) as CLOBish)
     : undefined;
-  const balances: Record<string, string> = {};
-  let connectorBalances: { [key: string]: string } | undefined;
+  const balances: Record<string, Record<string, string>> = {};
+  // let connectorBalances: { [key: string]: string } | undefined;
 
   if (!connector?.balances) {
     try {
       wallet = await ethereumish.getWallet(req.address);
+      capitalProviders = await ethereumish.getWalletCapitalProviders(
+        req.address
+      );
     } catch (err) {
       throw new HttpException(
         500,
@@ -143,13 +147,18 @@ export async function balances(
         LOAD_WALLET_ERROR_CODE
       );
     }
+    console.log('ethereum.controller.ts capitalProviders', capitalProviders);
 
     const tokens = getTokenSymbolsToTokens(ethereumish, req.tokenSymbols);
     if (req.tokenSymbols.includes(ethereumish.nativeTokenSymbol)) {
-      balances[ethereumish.nativeTokenSymbol] = tokenValueToString(
-        await ethereumish.getNativeBalance(wallet)
-      );
+      console.log('Requesting native token for ', wallet.address);
+      let _tempBalances: Record<string, string> = {};
+      let _tempBalance = await ethereumish.getNativeBalance(wallet);
+      _tempBalances[wallet.address] = tokenValueToString(_tempBalance);
+      balances[ethereumish.nativeTokenSymbol] = _tempBalances;
     }
+    console.log(balances);
+    console.log('ethereum.controller.ts balances', balances);
     await Promise.all(
       Object.keys(tokens).map(async (symbol) => {
         if (tokens[symbol] !== undefined) {
@@ -165,10 +174,22 @@ export async function balances(
             wallet,
             decimals
           );
-          balances[symbol] = tokenValueToString(balance);
+          let _tempBalances: Record<string, string> = {};
+          _tempBalances[wallet.address] = tokenValueToString(balance);
+          balances[symbol] = _tempBalances;
+          for (let capitalProvider of capitalProviders) {
+            const cpBalance = await ethereumish.getERC20BalanceAddr(
+              contract,
+              capitalProvider,
+              decimals
+            );
+            _tempBalances[capitalProvider] = tokenValueToString(cpBalance);
+            balances[symbol] = _tempBalances;
+          }
         }
       })
     );
+    console.log('ethereum.controller.ts balances', balances);
 
     if (!Object.keys(balances).length) {
       throw new HttpException(
@@ -179,14 +200,16 @@ export async function balances(
     }
   } else {
     // CLOB connector or any other connector that has the concept of separation of account has to implement a balance function
-    connectorBalances = await connector.balances(req);
+    // connectorBalances = await connector.balances(req);
+    console.log('Executing ELSE here');
   }
 
   return {
     network: ethereumish.chain,
     timestamp: initTime,
     latency: latency(initTime, Date.now()),
-    balances: connectorBalances || balances,
+    // balances: connectorBalances || balances,
+    balances: balances,
   };
 }
 
