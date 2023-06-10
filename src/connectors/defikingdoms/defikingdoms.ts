@@ -285,6 +285,48 @@ export class Defikingdoms implements Uniswapish {
     );
   }
 
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade,
+    gasPrice: number,
+    defikingdomsRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    _1?: BigNumber,
+    _2?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const result: SwapParameters = Router.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getAllowedSlippage(allowedSlippage),
+    });
+
+    const contract: Contract = new Contract(defikingdomsRouter, abi, wallet);
+    return this.harmony.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        const tx: ContractTransaction = await contract[result.methodName](
+          ...result.args,
+          {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          }
+        );
+
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
+  }
+
   async fetchPairData(tokenA: Token, tokenB: Token): Promise<Pair> {
     return await Fetcher.fetchPairData(tokenA, tokenB, this.harmony.provider);
   }

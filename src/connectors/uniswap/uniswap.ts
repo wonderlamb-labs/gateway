@@ -320,4 +320,59 @@ export class Uniswap implements Uniswapish {
       }
     );
   }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade<Currency, Currency, TradeType>,
+    gasPrice: number,
+    uniswapRouter: string,
+    ttl: number,
+    _abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const methodParameters: MethodParameters = SwapRouter.swapCallParameters(
+      trade,
+      {
+        deadlineOrPreviousBlockhash: Math.floor(Date.now() / 1000 + ttl),
+        recipient: wallet.address,
+        slippageTolerance: this.getAllowedSlippage(allowedSlippage),
+      }
+    );
+
+    return this.chain.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        let tx: ContractTransaction;
+        if (maxFeePerGas !== undefined || maxPriorityFeePerGas !== undefined) {
+          tx = await wallet.sendTransaction({
+            data: methodParameters.calldata,
+            to: uniswapRouter,
+            gasLimit: gasLimit.toFixed(0),
+            value: methodParameters.value,
+            nonce: nextNonce,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+          });
+        } else {
+          tx = await wallet.sendTransaction({
+            data: methodParameters.calldata,
+            to: this.router,
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: methodParameters.value,
+            nonce: nextNonce,
+          });
+        }
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
+  }
 }

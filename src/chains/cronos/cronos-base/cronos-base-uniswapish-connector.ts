@@ -241,7 +241,6 @@ export abstract class CronosBaseUniswapishConnector implements Uniswapish {
       recipient: wallet.address,
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
-
     const contract = new Contract(
       CronosBaseUniswapishConnectorRoute,
       abi,
@@ -268,7 +267,58 @@ export abstract class CronosBaseUniswapishConnector implements Uniswapish {
             nonce: nextNonce,
           });
         }
+        logger.info(`Transaction Details: ${JSON.stringify(tx)}`);
+        return tx;
+      }
+    );
+  }
 
+  public async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: UniswapishTrade,
+    gasPrice: number,
+    CronosBaseUniswapishConnectorRoute: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const result = this._sdkProvider.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getAllowedSlippage(allowedSlippage),
+    });
+    const contract = new Contract(
+      CronosBaseUniswapishConnectorRoute,
+      abi,
+      wallet
+    );
+    return this._cronos.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        let tx: ContractTransaction;
+        if (maxFeePerGas || maxPriorityFeePerGas) {
+          tx = await contract[result.methodName](...result.args, {
+            gasLimit: gasLimit,
+            value: result.value,
+            nonce: nextNonce,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+          });
+        } else {
+          tx = await contract[result.methodName](...result.args, {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          });
+        }
         logger.info(`Transaction Details: ${JSON.stringify(tx)}`);
         return tx;
       }

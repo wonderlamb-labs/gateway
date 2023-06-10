@@ -307,6 +307,21 @@ export interface Uniswapish {
     maxPriorityFeePerGas?: BigNumber,
     allowedSlippage?: string
   ): Promise<Transaction>;
+
+  executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: UniswapishTrade,
+    gasPrice: number,
+    uniswapRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction>;
 }
 
 export interface ZigZagTrade {

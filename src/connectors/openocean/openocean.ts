@@ -459,4 +459,86 @@ export class Openocean implements Uniswapish {
       TRADE_FAILED_ERROR_CODE
     );
   }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade,
+    gasPrice: number,
+    openoceanRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    logger.info(
+      `executeTrade ${openoceanRouter}-${ttl}-${abi}-${gasPrice}-${gasLimit}-${nonce}-${maxFeePerGas}-${maxPriorityFeePerGas}.`
+    );
+    const inToken: any = trade.route.input;
+    const outToken: any = trade.route.output;
+    let swapRes;
+    try {
+      swapRes = await axios.get(
+        `https://open-api.openocean.finance/v3/${this.chainName}/swap_quote`,
+        {
+          params: {
+            inTokenAddress: inToken.address,
+            outTokenAddress: outToken.address,
+            amount: trade.inputAmount.toExact(),
+            slippage: this.getSlippageNumberage(),
+            account: wallet.address,
+            gasPrice: gasPrice.toString(),
+            referrer: '0x3fb06064b88a65ba9b9eb840dbb5f3789f002642',
+          },
+        }
+      );
+    } catch (e) {
+      if (e instanceof Error) {
+        logger.error(`Could not get trade info. ${e.message}`);
+        throw new HttpException(
+          500,
+          TRADE_FAILED_ERROR_MESSAGE + e.message,
+          TRADE_FAILED_ERROR_CODE
+        );
+      } else {
+        logger.error('Unknown error trying to get trade info.');
+        throw new HttpException(
+          500,
+          UNKNOWN_ERROR_MESSAGE,
+          UNKNOWN_ERROR_ERROR_CODE
+        );
+      }
+    }
+    if (swapRes.status == 200 && swapRes.data.code == 200) {
+      const swapData = swapRes.data.data;
+      return this.chainInstance.nonceManager.provideNonce(
+        nonce,
+        wallet.address,
+        async (nextNonce) => {
+          const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
+          const trans = {
+            nonce: nextNonce,
+            from: swapData.from,
+            to: swapData.to,
+            gasLimit: BigNumber.from(gas.toString()),
+            data: swapData.data,
+            value: BigNumber.from(swapData.value),
+            chainId: this.chainId,
+          };
+          const tx = await wallet.sendTransaction(trans);
+          logger.info(JSON.stringify(tx));
+
+          return tx;
+        }
+      );
+    }
+    throw new HttpException(
+      swapRes.status,
+      `Could not get trade info. ${swapRes.statusText}`,
+      TRADE_FAILED_ERROR_CODE
+    );
+  }
 }

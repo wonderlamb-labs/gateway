@@ -313,4 +313,52 @@ export class PancakeSwap implements Uniswapish {
     await this.bsc.nonceManager.commitNonce(wallet.address, nonce);
     return tx;
   }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade,
+    gasPrice: number,
+    pancakeswapRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const result: SwapParameters = Router.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getAllowedSlippage(allowedSlippage),
+    });
+
+    const contract: Contract = new Contract(pancakeswapRouter, abi, wallet);
+    if (nonce === undefined) {
+      nonce = await this.bsc.nonceManager.getNextNonce(wallet.address);
+    }
+    let tx: ContractTransaction;
+    if (maxFeePerGas || maxPriorityFeePerGas) {
+      tx = await contract[result.methodName](...result.args, {
+        gasLimit: gasLimit,
+        value: result.value,
+        nonce: nonce,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      });
+    } else {
+      tx = await contract[result.methodName](...result.args, {
+        gasPrice: (gasPrice * 1e9).toFixed(0),
+        gasLimit: gasLimit.toFixed(0),
+        value: result.value,
+        nonce: nonce,
+      });
+    }
+
+    logger.info(`Transaction Details: ${JSON.stringify(tx)}`);
+    await this.bsc.nonceManager.commitNonce(wallet.address, nonce);
+    return tx;
+  }
 }

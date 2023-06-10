@@ -319,4 +319,46 @@ export class Defira implements Uniswapish {
       }
     );
   }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: DefiraTrade<Token, Token, TradeType>,
+    gasPrice: number,
+    defiraRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    _1?: BigNumber,
+    _2?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const result: SwapParameters = DefiraRouter.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getAllowedSlippage(allowedSlippage),
+    });
+
+    const contract: Contract = new Contract(defiraRouter, abi, wallet);
+    return this.harmony.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        const tx: ContractTransaction = await contract[result.methodName](
+          ...result.args,
+          {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          }
+        );
+
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
+  }
 }

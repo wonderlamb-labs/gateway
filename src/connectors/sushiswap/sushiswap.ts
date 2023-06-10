@@ -307,4 +307,52 @@ export class Sushiswap implements Uniswapish {
       }
     );
   }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade<Token, Token, TradeType.EXACT_INPUT | TradeType.EXACT_OUTPUT>,
+    gasPrice: number,
+    sushswapRouter: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
+    const result: SwapParameters = Router.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getSlippagePercentage(),
+    });
+    const contract: Contract = new Contract(sushswapRouter, abi, wallet);
+    return this.chain.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        let tx: ContractTransaction;
+        if (maxFeePerGas !== undefined || maxPriorityFeePerGas !== undefined) {
+          tx = await contract[result.methodName](...result.args, {
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+          });
+        } else {
+          tx = await contract[result.methodName](...result.args, {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          });
+        }
+
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
+  }
 }

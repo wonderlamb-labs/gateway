@@ -1,5 +1,5 @@
 // @ts-nocheck
-import hedgeFactoryABI from "../gamut/sdk/abi/hedgeFactory";
+import hedgeFactoryABI from '../gamut/sdk/abi/hedgeFactory';
 import { percentRegexp } from '../../services/config-manager-v2';
 import { UniswapishPriceError } from '../../services/error-handler';
 import {
@@ -20,13 +20,19 @@ import {
   Trade as SdkTrade,
   Router,
   Fetcher as SdkFetcher,
-  Pair as SdkPair 
-} from "./sdk";
-import { ChainId, defaultTokenList, ROUTER, ROUTER_ADDRESS, SAFE_MODULE_ADDRESS } from "./sdk/constants";
+  Pair as SdkPair,
+} from './sdk';
+import {
+  ChainId,
+  defaultTokenList,
+  ROUTER,
+  ROUTER_ADDRESS,
+  SAFE_MODULE_ADDRESS,
+} from './sdk/constants';
 import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
-import { BaseProvider } from "@ethersproject/providers";
+import { BaseProvider } from '@ethersproject/providers';
 
 export class Gamut implements Uniswapish {
   private static _instances: { [name: string]: Gamut };
@@ -168,8 +174,7 @@ export class Gamut implements Uniswapish {
       this.kava.provider,
       baseToken.symbol,
       baseToken.name
-    )
-
+    );
 
     let quoteTokenDetails: Token = await SdkFetcher.fetchTokenData(
       quoteToken.chainId,
@@ -177,13 +182,13 @@ export class Gamut implements Uniswapish {
       this.kava.provider,
       quoteToken.symbol,
       quoteToken.name
-    )
+    );
 
     const pair: SdkPair = await SdkFetcher.fetchPairData(
       baseTokenDetails,
       quoteTokenDetails,
       this.kava.provider
-    )
+    );
 
     const trades: Trade[] = SdkTrade.bestTradeExactIn(
       [pair as Pair],
@@ -236,8 +241,7 @@ export class Gamut implements Uniswapish {
       this.kava.provider,
       baseToken.symbol,
       baseToken.name
-    )
-
+    );
 
     let quoteTokenDetails: Token = await SdkFetcher.fetchTokenData(
       quoteToken.chainId,
@@ -245,15 +249,15 @@ export class Gamut implements Uniswapish {
       this.kava.provider,
       quoteToken.symbol,
       quoteToken.name
-    )
+    );
 
     const pair: SdkPair = await SdkFetcher.fetchPairData(
       baseTokenDetails,
       quoteTokenDetails,
       this.kava.provider
-    )
+    );
 
-    console.log(JSON.stringify(pair))
+    console.log(JSON.stringify(pair));
 
     const trades: SdkTrade[] = SdkTrade.bestTradeExactOut(
       [pair as Pair],
@@ -303,6 +307,57 @@ export class Gamut implements Uniswapish {
     maxPriorityFeePerGas?: BigNumber,
     allowedSlippage?: string
   ): Promise<Transaction> {
+    const result = Router.swapCallParameters(trade, {
+      ttl,
+      recipient: wallet.address,
+      allowedSlippage: this.getAllowedSlippage(allowedSlippage),
+    });
+
+    const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
+
+    return this.kava.nonceManager.provideNonce(
+      nonce,
+      wallet.address,
+      async (nextNonce) => {
+        let tx: ContractTransaction;
+        if (maxFeePerGas || maxPriorityFeePerGas) {
+          tx = await contract[result.methodName](...result.args, {
+            gasLimit: gasLimit,
+            value: result.value,
+            nonce: nextNonce,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+          });
+        } else {
+          tx = await contract[result.methodName](...result.args, {
+            gasPrice: (gasPrice * 1e9).toFixed(0),
+            gasLimit: gasLimit.toFixed(0),
+            value: result.value,
+            nonce: nextNonce,
+          });
+        }
+
+        logger.info(JSON.stringify(tx));
+        return tx;
+      }
+    );
+  }
+
+  async executeTradeWithCP(
+    wallet: Wallet,
+    capitalProvider: string,
+    trade: Trade,
+    gasPrice: number,
+    safeModule: string,
+    ttl: number,
+    abi: ContractInterface,
+    gasLimit: number,
+    nonce?: number,
+    maxFeePerGas?: BigNumber,
+    maxPriorityFeePerGas?: BigNumber,
+    allowedSlippage?: string
+  ): Promise<Transaction> {
+    console.log('Capital Provider', capitalProvider);
     const result = Router.swapCallParameters(trade, {
       ttl,
       recipient: wallet.address,
