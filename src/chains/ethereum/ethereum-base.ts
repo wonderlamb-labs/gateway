@@ -243,6 +243,13 @@ export class EthereumBase {
     return { value: balance, decimals: 18 };
   }
 
+  // returns the Native balance directly for address, convert BigNumber to string
+  async getNativeBalanceAddr(address: string): Promise<TokenValue> {
+    // const balance = await wallet.getBalance();
+    const balance = await this._provider.getBalance(address);
+    return { value: balance, decimals: 18 };
+  }
+
   // returns the balance for an ERC-20 token
   async getERC20Balance(
     contract: Contract,

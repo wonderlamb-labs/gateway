@@ -8,10 +8,19 @@ import { TokenInfo } from '../chains/ethereum/ethereum-base';
 
 export interface BalanceRequest extends NetworkSelectionRequest {
   address: string; // the users public Ethereum key
+  capitalProvider?: string; // the users public Ethereum key
   tokenSymbols: string[]; // a list of token symbol
 }
 
 export interface BalanceResponse {
+  network: string;
+  timestamp: number;
+  latency: number;
+  account: string;
+  balances: Record<string, string>; // the balance should be a string encoded number
+}
+
+export interface BalanceResponseWithCP {
   network: string;
   timestamp: number;
   latency: number;

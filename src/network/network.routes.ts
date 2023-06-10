@@ -14,6 +14,7 @@ import { getStatus, getTokens } from './network.controllers';
 import {
   BalanceRequest,
   BalanceResponse,
+  BalanceResponseWithCP,
   PollRequest,
   PollResponse,
   StatusRequest,
@@ -63,15 +64,36 @@ export namespace NetworkRoutes {
         res: Response<BalanceResponse | string, {}>,
         _next: NextFunction
       ) => {
+        console.log(req.body);
         validateEthereumBalanceRequest(req.body);
         const chain = await getChain<Ethereumish>(
           req.body.chain,
           req.body.network
         );
-
         res
           .status(200)
           .json(await ethereumControllers.balances(chain, req.body));
+      }
+    )
+  );
+
+  router.post(
+    '/balancesWithCP',
+    asyncHandler(
+      async (
+        req: Request<{}, {}, BalanceRequest>,
+        res: Response<BalanceResponseWithCP | string, {}>,
+        _next: NextFunction
+      ) => {
+        console.log(req.body);
+        validateEthereumBalanceRequest(req.body);
+        const chain = await getChain<Ethereumish>(
+          req.body.chain,
+          req.body.network
+        );
+        res
+          .status(200)
+          .json(await ethereumControllers.balancesWithCP(chain, req.body));
       }
     )
   );

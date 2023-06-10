@@ -43,6 +43,7 @@ import {
   PollResponse,
   BalanceRequest,
   BalanceResponse,
+  BalanceResponseWithCP,
 } from '../../network/network.requests';
 import { logger } from '../../services/logger';
 
@@ -120,10 +121,10 @@ export async function allowances(
   };
 }
 
-export async function balances(
+export async function balancesWithCP(
   ethereumish: Ethereumish,
   req: BalanceRequest
-): Promise<BalanceResponse> {
+): Promise<BalanceResponseWithCP> {
   const initTime = Date.now();
 
   let wallet: Wallet;
@@ -210,6 +211,113 @@ export async function balances(
     latency: latency(initTime, Date.now()),
     // balances: connectorBalances || balances,
     balances: balances,
+  };
+}
+
+export async function balances(
+  ethereumish: Ethereumish,
+  req: BalanceRequest
+): Promise<BalanceResponse | string> {
+  const initTime = Date.now();
+
+  let wallet: Wallet;
+  let capitalProviders: string[];
+  let balancesForAddress: string = '';
+  const connector: CLOBish | undefined = req.connector
+    ? ((await getConnector(req.chain, req.network, req.connector)) as CLOBish)
+    : undefined;
+  const balances: Record<string, string> = {};
+  let connectorBalances: { [key: string]: string } | undefined;
+
+  // let requestingCapitalProviderBalance = false;
+  if (!connector?.balances) {
+    try {
+      wallet = await ethereumish.getWallet(req.address);
+      capitalProviders = await ethereumish.getWalletCapitalProviders(
+        req.address
+      );
+    } catch (err) {
+      throw new HttpException(
+        500,
+        LOAD_WALLET_ERROR_MESSAGE + err,
+        LOAD_WALLET_ERROR_CODE
+      );
+    }
+
+    const tokens = getTokenSymbolsToTokens(ethereumish, req.tokenSymbols);
+
+    if (req.capitalProvider && capitalProviders.includes(req.capitalProvider)) {
+      const capitalProviderAddress = req.capitalProvider;
+      balancesForAddress = capitalProviderAddress;
+      if (req.tokenSymbols.includes(ethereumish.nativeTokenSymbol)) {
+        balances[ethereumish.nativeTokenSymbol] = tokenValueToString(
+          await ethereumish.getNativeBalanceAddr(capitalProviderAddress)
+        );
+      }
+      await Promise.all(
+        Object.keys(tokens).map(async (symbol) => {
+          if (tokens[symbol] !== undefined) {
+            const address = tokens[symbol].address;
+            const decimals = tokens[symbol].decimals;
+            // instantiate a contract and pass in provider for read-only access
+            const contract = ethereumish.getContract(
+              address,
+              ethereumish.provider
+            );
+            const balance = await ethereumish.getERC20BalanceAddr(
+              contract,
+              capitalProviderAddress,
+              decimals
+            );
+            balances[symbol] = tokenValueToString(balance);
+          }
+        })
+      );
+    } else {
+      balancesForAddress = wallet.address;
+      if (req.tokenSymbols.includes(ethereumish.nativeTokenSymbol)) {
+        balances[ethereumish.nativeTokenSymbol] = tokenValueToString(
+          await ethereumish.getNativeBalance(wallet)
+        );
+      }
+      await Promise.all(
+        Object.keys(tokens).map(async (symbol) => {
+          if (tokens[symbol] !== undefined) {
+            const address = tokens[symbol].address;
+            const decimals = tokens[symbol].decimals;
+            // instantiate a contract and pass in provider for read-only access
+            const contract = ethereumish.getContract(
+              address,
+              ethereumish.provider
+            );
+            const balance = await ethereumish.getERC20Balance(
+              contract,
+              wallet,
+              decimals
+            );
+            balances[symbol] = tokenValueToString(balance);
+          }
+        })
+      );
+    }
+    if (!Object.keys(balances).length) {
+      throw new HttpException(
+        500,
+        TOKEN_NOT_SUPPORTED_ERROR_MESSAGE,
+        TOKEN_NOT_SUPPORTED_ERROR_CODE
+      );
+    }
+  } else {
+    // CLOB connector or any other connector that has the concept of separation of account has to implement a balance function
+    connectorBalances = await connector.balances(req);
+  }
+
+  return {
+    network: ethereumish.chain,
+    account: balancesForAddress,
+    timestamp: initTime,
+    latency: latency(initTime, Date.now()),
+    balances: connectorBalances || balances,
   };
 }
 

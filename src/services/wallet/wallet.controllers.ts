@@ -237,10 +237,18 @@ export async function addCapitalProvider(
     await fse.readFile(`${path}/${req.walletAddress}.json`, 'utf8')
   );
 
-  const capitalProviders = walletFile.capitalProviders;
+  let capitalProviders = walletFile.capitalProviders;
 
-  if (!capitalProviders.includes(req.capitalProviderAddress)) {
+  // If capital providers does not exist on the wallet file
+  if (!capitalProviders) {
+    capitalProviders = [];
     capitalProviders.push(req.capitalProviderAddress);
+  } else {
+    // capital providers exists and we want to add another capital provider
+    const index = capitalProviders.indexOf(req.capitalProviderAddress);
+    if (index < 0) {
+      capitalProviders.push(req.capitalProviderAddress);
+    }
   }
 
   walletFile.capitalProviders = capitalProviders;
