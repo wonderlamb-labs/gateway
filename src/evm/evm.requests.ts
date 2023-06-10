@@ -12,6 +12,7 @@ export interface NonceResponse {
 
 export interface AllowancesRequest extends NetworkSelectionRequest {
   address: string; // the users public Ethereum key
+  capitalProvider?: string; // the capital's provider public Ethereum key
   spender: string; // the spender address for whom approvals are checked
   tokenSymbols: string[]; // a list of token symbol
 }

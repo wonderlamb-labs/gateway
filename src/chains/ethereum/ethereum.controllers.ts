@@ -90,6 +90,9 @@ export async function allowances(
 ): Promise<AllowancesResponse | string> {
   const initTime = Date.now();
   const wallet = await ethereumish.getWallet(req.address);
+  const capitalProviders = await ethereumish.getWalletCapitalProviders(
+    req.address
+  );
   const tokens = getTokenSymbolsToTokens(ethereumish, req.tokenSymbols);
   const spender = ethereumish.getSpender(req.spender);
 
@@ -101,14 +104,29 @@ export async function allowances(
         tokens[symbol].address,
         ethereumish.provider
       );
-      approvals[symbol] = tokenValueToString(
-        await ethereumish.getERC20Allowance(
-          contract,
-          wallet,
-          spender,
-          tokens[symbol].decimals
-        )
-      );
+
+      if (
+        req.capitalProvider &&
+        capitalProviders.includes(req.capitalProvider)
+      ) {
+        approvals[symbol] = tokenValueToString(
+          await ethereumish.getERC20AllowanceAddr(
+            contract,
+            req.capitalProvider,
+            spender,
+            tokens[symbol].decimals
+          )
+        );
+      } else {
+        approvals[symbol] = tokenValueToString(
+          await ethereumish.getERC20Allowance(
+            contract,
+            wallet,
+            spender,
+            tokens[symbol].decimals
+          )
+        );
+      }
     })
   );
 
