@@ -12,7 +12,8 @@ import {
 } from 'ethers';
 import { isFractionString } from '../../services/validators';
 import { GamutConfig } from './gamut.config';
-import routerAbi from './safe_module_abi.json';
+// import routerAbi from './safe_module_abi.json';
+import routerAbi from './gamut_abi.json';
 import {
   Token,
   Percent,
@@ -33,6 +34,7 @@ import { logger } from '../../services/logger';
 import { Kava } from '../../chains/kava/kava';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
 import { BaseProvider } from '@ethersproject/providers';
+import { nextNonce } from '../../chains/ethereum/ethereum.controllers';
 
 export class Gamut implements Uniswapish {
   private static _instances: { [name: string]: Gamut };
@@ -203,7 +205,7 @@ export class Gamut implements Uniswapish {
       );
     }
     logger.info(
-      `Best trade for ${baseToken.address}-${quoteToken.address}: ${trades[0]}`
+      `Best SELL trade for ${baseToken.address}-${quoteToken.address}: ${trades[0]}`
     );
     const expectedAmount = trades[0].minimumAmountOut(
       this.getAllowedSlippage(allowedSlippage)
@@ -271,7 +273,7 @@ export class Gamut implements Uniswapish {
       );
     }
     logger.info(
-      `Best trade for ${quoteToken.address}-${baseToken.address}: ${trades[0]}`
+      `Best BUY trade for ${quoteToken.address}-${baseToken.address}: ${trades[0]}`
     );
 
     const expectedAmount = trades[0].maximumAmountIn(
@@ -307,40 +309,49 @@ export class Gamut implements Uniswapish {
     maxPriorityFeePerGas?: BigNumber,
     allowedSlippage?: string
   ): Promise<Transaction> {
-    const result = Router.swapCallParameters(trade, {
+    const result = Router.swapCallParameters(trade, wallet, {
       ttl,
       recipient: wallet.address,
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
 
-    const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
+    // const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
+    const contract = new Contract(ROUTER_ADDRESS, abi, wallet);
+    console.log(contract);
 
-    return this.kava.nonceManager.provideNonce(
-      nonce,
-      wallet.address,
-      async (nextNonce) => {
-        let tx: ContractTransaction;
-        if (maxFeePerGas || maxPriorityFeePerGas) {
-          tx = await contract[result.methodName](...result.args, {
-            gasLimit: gasLimit,
-            value: result.value,
-            nonce: nextNonce,
-            maxFeePerGas,
-            maxPriorityFeePerGas,
-          });
-        } else {
-          tx = await contract[result.methodName](...result.args, {
-            gasPrice: (gasPrice * 1e9).toFixed(0),
-            gasLimit: gasLimit.toFixed(0),
-            value: result.value,
-            nonce: nextNonce,
-          });
-        }
+    console.log(result);
 
-        logger.info(JSON.stringify(tx));
-        return tx;
-      }
-    );
+    if (nonce === undefined) {
+      nonce = await this.kava.nonceManager.getNextNonce(wallet.address);
+    }
+    console.log('Nonce', nonce);
+    console.log('MaxFeePerGas', maxFeePerGas);
+    console.log('MaxPriorityFeePerGas', maxPriorityFeePerGas);
+    console.log('GasPrice', gasPrice);
+    console.log('GasLimit', gasLimit);
+    console.log(contract[result.methodName]);
+
+    let tx: ContractTransaction;
+    if (maxFeePerGas || maxPriorityFeePerGas) {
+      tx = await contract[result.methodName](...result.args, {
+        gasLimit: gasLimit,
+        value: result.value,
+        nonce: nonce,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      });
+    } else {
+      tx = await contract[result.methodName](...result.args, {
+        gasPrice: (gasPrice * 1e9).toFixed(0),
+        gasLimit: gasLimit.toFixed(0),
+        value: result.value,
+        nonce: nonce,
+      });
+    }
+
+    logger.info(`Transaction Details: ${JSON.stringify(tx)}`);
+    await this.kava.nonceManager.commitNonce(wallet.address, nonce);
+    return tx;
   }
 
   async executeTradeWithCP(
@@ -365,32 +376,30 @@ export class Gamut implements Uniswapish {
     });
 
     const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
+    if (nonce === undefined) {
+      nonce = await this.kava.nonceManager.getNextNonce(wallet.address);
+    }
 
-    return this.kava.nonceManager.provideNonce(
-      nonce,
-      wallet.address,
-      async (nextNonce) => {
-        let tx: ContractTransaction;
-        if (maxFeePerGas || maxPriorityFeePerGas) {
-          tx = await contract[result.methodName](...result.args, {
-            gasLimit: gasLimit,
-            value: result.value,
-            nonce: nextNonce,
-            maxFeePerGas,
-            maxPriorityFeePerGas,
-          });
-        } else {
-          tx = await contract[result.methodName](...result.args, {
-            gasPrice: (gasPrice * 1e9).toFixed(0),
-            gasLimit: gasLimit.toFixed(0),
-            value: result.value,
-            nonce: nextNonce,
-          });
-        }
+    let tx: ContractTransaction;
+    if (maxFeePerGas || maxPriorityFeePerGas) {
+      tx = await contract[result.methodName](...result.args, {
+        gasLimit: gasLimit,
+        value: result.value,
+        nonce: nonce,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      });
+    } else {
+      tx = await contract[result.methodName](...result.args, {
+        gasPrice: (gasPrice * 1e9).toFixed(0),
+        gasLimit: gasLimit.toFixed(0),
+        value: result.value,
+        nonce: nonce,
+      });
+    }
 
-        logger.info(JSON.stringify(tx));
-        return tx;
-      }
-    );
+    logger.info(`Transaction Details: ${JSON.stringify(tx)}`);
+    await this.kava.nonceManager.commitNonce(wallet.address, nonce);
+    return tx;
   }
 }

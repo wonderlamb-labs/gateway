@@ -61,6 +61,7 @@ export async function txWriteData(
   maxPriorityFeePerGas?: string
 ): Promise<{
   wallet: Wallet;
+  capitalProviders: string[];
   maxFeePerGasBigNumber: BigNumber | undefined;
   maxPriorityFeePerGasBigNumber: BigNumber | undefined;
 }> {
@@ -74,8 +75,10 @@ export async function txWriteData(
   }
 
   let wallet: Wallet;
+  let capitalProviders: string[];
   try {
     wallet = await ethereumish.getWallet(address);
+    capitalProviders = await ethereumish.getWalletCapitalProviders(address);
   } catch (err) {
     logger.error(`Wallet ${address} not available.`);
     throw new HttpException(
@@ -84,7 +87,12 @@ export async function txWriteData(
       LOAD_WALLET_ERROR_CODE
     );
   }
-  return { wallet, maxFeePerGasBigNumber, maxPriorityFeePerGasBigNumber };
+  return {
+    wallet,
+    capitalProviders,
+    maxFeePerGasBigNumber,
+    maxPriorityFeePerGasBigNumber,
+  };
 }
 
 export async function getTradeInfo(
@@ -202,13 +210,17 @@ export async function trade(
   const startTimestamp: number = Date.now();
 
   const limitPrice = req.limitPrice;
-  const { wallet, maxFeePerGasBigNumber, maxPriorityFeePerGasBigNumber } =
-    await txWriteData(
-      ethereumish,
-      req.address,
-      req.maxFeePerGas,
-      req.maxPriorityFeePerGas
-    );
+  const {
+    wallet,
+    capitalProviders,
+    maxFeePerGasBigNumber,
+    maxPriorityFeePerGasBigNumber,
+  } = await txWriteData(
+    ethereumish,
+    req.address,
+    req.maxFeePerGas,
+    req.maxPriorityFeePerGas
+  );
 
   let tradeInfo: TradeInfo;
   try {
@@ -260,19 +272,41 @@ export async function trade(
       );
     }
 
-    const tx = await uniswapish.executeTrade(
-      wallet,
-      tradeInfo.expectedTrade.trade,
-      gasPrice,
-      uniswapish.router,
-      uniswapish.ttl,
-      uniswapish.routerAbi,
-      gasLimitTransaction,
-      req.nonce,
-      maxFeePerGasBigNumber,
-      maxPriorityFeePerGasBigNumber,
-      req.allowedSlippage
-    );
+    let tx;
+    if (
+      capitalProviders &&
+      req.capitalProvider &&
+      capitalProviders.includes(req.capitalProvider)
+    ) {
+      tx = await uniswapish.executeTradeWithCP(
+        wallet,
+        req.capitalProvider,
+        tradeInfo.expectedTrade.trade,
+        gasPrice,
+        uniswapish.router,
+        uniswapish.ttl,
+        uniswapish.routerAbi,
+        gasLimitTransaction,
+        req.nonce,
+        maxFeePerGasBigNumber,
+        maxPriorityFeePerGasBigNumber,
+        req.allowedSlippage
+      );
+    } else {
+      tx = await uniswapish.executeTrade(
+        wallet,
+        tradeInfo.expectedTrade.trade,
+        gasPrice,
+        uniswapish.router,
+        uniswapish.ttl,
+        uniswapish.routerAbi,
+        gasLimitTransaction,
+        req.nonce,
+        maxFeePerGasBigNumber,
+        maxPriorityFeePerGasBigNumber,
+        req.allowedSlippage
+      );
+    }
 
     if (tx.hash) {
       await ethereumish.txStorage.saveTx(
@@ -326,19 +360,39 @@ export async function trade(
       );
     }
 
-    const tx = await uniswapish.executeTrade(
-      wallet,
-      tradeInfo.expectedTrade.trade,
-      gasPrice,
-      uniswapish.router,
-      uniswapish.ttl,
-      uniswapish.routerAbi,
-      gasLimitTransaction,
-      req.nonce,
-      maxFeePerGasBigNumber,
-      maxPriorityFeePerGasBigNumber
-    );
-
+    let tx;
+    if (
+      capitalProviders &&
+      req.capitalProvider &&
+      capitalProviders.includes(req.capitalProvider)
+    ) {
+      tx = await uniswapish.executeTradeWithCP(
+        wallet,
+        req.capitalProvider,
+        tradeInfo.expectedTrade.trade,
+        gasPrice,
+        uniswapish.router,
+        uniswapish.ttl,
+        uniswapish.routerAbi,
+        gasLimitTransaction,
+        req.nonce,
+        maxFeePerGasBigNumber,
+        maxPriorityFeePerGasBigNumber
+      );
+    } else {
+      tx = await uniswapish.executeTrade(
+        wallet,
+        tradeInfo.expectedTrade.trade,
+        gasPrice,
+        uniswapish.router,
+        uniswapish.ttl,
+        uniswapish.routerAbi,
+        gasLimitTransaction,
+        req.nonce,
+        maxFeePerGasBigNumber,
+        maxPriorityFeePerGasBigNumber
+      );
+    }
     logger.info(
       `Trade has been executed, txHash is ${tx.hash}, nonce is ${tx.nonce}, gasPrice is ${gasPrice}.`
     );

@@ -57,6 +57,7 @@ export interface TradeRequest extends NetworkSelectionRequest {
   base: string;
   amount: string;
   address: string;
+  capitalProvider?: string;
   side: Side;
   limitPrice?: string; // integer as string
   nonce?: number;
