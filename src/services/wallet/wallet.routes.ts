@@ -8,6 +8,8 @@ import {
   removeWallet,
   getWallets,
   signMessage,
+  addCapitalProvider,
+  removeCapitalProvider,
 } from './wallet.controllers';
 
 import {
@@ -17,10 +19,16 @@ import {
   GetWalletResponse,
   WalletSignRequest,
   WalletSignResponse,
+  AddCapitalProviderToWalletRequest,
+  AddCapitalProviderResponse,
+  RemoveCapitalProviderFromWalletRequest,
+  RemoveCapitalProviderResponse,
 } from './wallet.requests';
 
 import {
+  validateAddCapitalProviderRequest,
   validateAddWalletRequest,
+  validateRemoveCapitalProviderRequest,
   validateRemoveWalletRequest,
   validateWalletSignRequest,
 } from './wallet.validators';
@@ -49,9 +57,18 @@ export namespace WalletRoutes {
     )
   );
 
-  // TODO: Add routes for
-  // * addCapitalProvider
-  // * removeCapitalProvider
+  router.post(
+    '/addCapitalProvider',
+    asyncHandler(
+      async (
+        req: Request<{}, {}, AddCapitalProviderToWalletRequest>,
+        res: Response<AddCapitalProviderResponse, {}>
+      ) => {
+        validateAddCapitalProviderRequest(req.body);
+        res.status(200).json(await addCapitalProvider(req.body));
+      }
+    )
+  );
 
   router.delete(
     '/remove',
@@ -63,6 +80,19 @@ export namespace WalletRoutes {
         validateRemoveWalletRequest(req.body);
         await removeWallet(req.body);
         res.status(200).json();
+      }
+    )
+  );
+
+  router.delete(
+    '/removeCapitalProvider',
+    asyncHandler(
+      async (
+        req: Request<{}, {}, RemoveCapitalProviderFromWalletRequest>,
+        res: Response<RemoveCapitalProviderResponse, {}>
+      ) => {
+        validateRemoveCapitalProviderRequest(req.body);
+        res.status(200).json(await removeCapitalProvider(req.body));
       }
     )
   );

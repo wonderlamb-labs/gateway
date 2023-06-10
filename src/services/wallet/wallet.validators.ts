@@ -144,6 +144,18 @@ export const validateAddress: Validator = mkValidator(
   (val) => typeof val === 'string'
 );
 
+export const validateWalletAddress: Validator = mkValidator(
+  'walletAddress',
+  invalidAddressError,
+  (val) => typeof val === 'string'
+);
+
+export const validateCapitalProviderAddress: Validator = mkValidator(
+  'capitalProviderAddress',
+  invalidAddressError,
+  (val) => typeof val === 'string'
+);
+
 export const validateAccountID: Validator = mkValidator(
   'accountId',
   invalidAccountIDError,
@@ -165,9 +177,23 @@ export const validateAddWalletRequest: RequestValidator = mkRequestValidator([
   validateAccountID,
 ]);
 
+export const validateAddCapitalProviderRequest: RequestValidator =
+  mkRequestValidator([
+    validateChain,
+    validateNetwork,
+    validateWalletAddress,
+    validateCapitalProviderAddress,
+  ]);
+
 export const validateRemoveWalletRequest: RequestValidator = mkRequestValidator(
   [validateAddress, validateChain]
 );
+export const validateRemoveCapitalProviderRequest: RequestValidator =
+  mkRequestValidator([
+    validateWalletAddress,
+    validateCapitalProviderAddress,
+    validateChain,
+  ]);
 
 export const validateWalletSignRequest: RequestValidator = mkRequestValidator([
   validateAddress,
@@ -175,4 +201,3 @@ export const validateWalletSignRequest: RequestValidator = mkRequestValidator([
   validateNetwork,
   validateMessage,
 ]);
-

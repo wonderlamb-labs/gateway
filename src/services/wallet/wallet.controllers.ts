@@ -17,6 +17,10 @@ import {
   GetWalletResponse,
   WalletSignRequest,
   WalletSignResponse,
+  AddCapitalProviderResponse,
+  AddCapitalProviderToWalletRequest,
+  RemoveCapitalProviderResponse,
+  RemoveCapitalProviderFromWalletRequest,
 } from './wallet.requests';
 
 import { ConfigManagerCertPassphrase } from '../config-manager-cert-passphrase';
@@ -198,6 +202,87 @@ export async function addWallet(
 // if the file does not exist, this should not fail
 export async function removeWallet(req: RemoveWalletRequest): Promise<void> {
   await fse.remove(`./conf/wallets/${req.chain}/${req.address}.json`);
+}
+
+export async function addCapitalProvider(
+  req: AddCapitalProviderToWalletRequest
+): Promise<AddCapitalProviderResponse> {
+  try {
+    const safeModule = SafeModule.getInstance(req.chain, req.network);
+    const isWalletAllowed: boolean =
+      await safeModule.isWalletAllowedForCapitalProvider(
+        req.walletAddress,
+        req.capitalProviderAddress
+      );
+
+    if (!isWalletAllowed) {
+      console.log(
+        `${req.capitalProviderAddress} has not allowed ${req.walletAddress} to make trades.`
+      );
+      throw new Error(
+        `${req.capitalProviderAddress} has not allowed ${req.walletAddress} to make trades.`
+      );
+    }
+  } catch (_e: unknown) {
+    // TODO:: Update exception
+    throw new HttpException(
+      500,
+      ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_MESSAGE(req.walletAddress),
+      ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_CODE
+    );
+  }
+  const path = `${walletPath}/${req.chain}`;
+
+  const walletFile = JSON.parse(
+    await fse.readFile(`${path}/${req.walletAddress}.json`, 'utf8')
+  );
+
+  const capitalProviders = walletFile.capitalProviders;
+
+  if (!capitalProviders.includes(req.capitalProviderAddress)) {
+    capitalProviders.push(req.capitalProviderAddress);
+  }
+
+  walletFile.capitalProviders = capitalProviders;
+
+  await fse.writeFile(
+    `${path}/${req.walletAddress}.json`,
+    JSON.stringify(walletFile)
+  );
+
+  return {
+    walletAddress: req.walletAddress,
+    capitalProviderAddress: req.capitalProviderAddress,
+  };
+}
+
+export async function removeCapitalProvider(
+  req: RemoveCapitalProviderFromWalletRequest
+): Promise<RemoveCapitalProviderResponse> {
+  const path = `${walletPath}/${req.chain}`;
+
+  const walletFile = JSON.parse(
+    await fse.readFile(`${path}/${req.walletAddress}.json`, 'utf8')
+  );
+
+  const capitalProviders = walletFile.capitalProviders;
+
+  const index = capitalProviders.indexOf(req.capitalProviderAddress);
+  if (index > -1) {
+    capitalProviders.splice(index, 1);
+  }
+
+  walletFile.capitalProviders = capitalProviders;
+
+  await fse.writeFile(
+    `${path}/${req.walletAddress}.json`,
+    JSON.stringify(walletFile)
+  );
+
+  return {
+    walletAddress: req.walletAddress,
+    capitalProviderAddress: req.capitalProviderAddress,
+  };
 }
 
 export async function signMessage(

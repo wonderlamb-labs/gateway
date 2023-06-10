@@ -7,6 +7,29 @@ export interface AddWalletRequest {
   accountId?: number;
 }
 
+export interface AddCapitalProviderToWalletRequest {
+  chain: string;
+  network: string;
+  walletAddress: string;
+  capitalProviderAddress: string;
+}
+
+export interface AddCapitalProviderResponse {
+  walletAddress: string;
+  capitalProviderAddress: string;
+}
+
+export interface RemoveCapitalProviderFromWalletRequest {
+  chain: string;
+  walletAddress: string;
+  capitalProviderAddress: string;
+}
+
+export interface RemoveCapitalProviderResponse {
+  walletAddress: string;
+  capitalProviderAddress: string;
+}
+
 export interface AddWalletResponse {
   address: string;
   capitalProviders?: string[];
