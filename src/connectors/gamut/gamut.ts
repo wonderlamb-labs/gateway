@@ -12,7 +12,7 @@ import {
 } from 'ethers';
 import { isFractionString } from '../../services/validators';
 import { GamutConfig } from './gamut.config';
-// import routerAbi from './safe_module_abi.json';
+import safeModuleAbi from './safe_module_abi.json';
 import routerAbi from './gamut_abi.json';
 import {
   Token,
@@ -41,6 +41,7 @@ export class Gamut implements Uniswapish {
   private kava: Kava;
   private _router: string;
   private _routerAbi: ContractInterface;
+  private _safeModuleAbi: ContractInterface;
   private _gasLimitEstimate: number;
   private _ttl: number;
   private chainId;
@@ -52,8 +53,12 @@ export class Gamut implements Uniswapish {
     this.kava = Kava.getInstance(network);
     this.chainId = this.kava.chainId;
     this._router = config.routerAddress(network);
+
+    // TODO:: get safemodule address from config
+    // this._safeModule = config.safeModuleAddress(network);
     this._ttl = config.ttl;
     this._routerAbi = routerAbi;
+    this._safeModuleAbi = safeModuleAbi;
     this._gasLimitEstimate = config.gasLimitEstimate;
   }
 
@@ -110,6 +115,13 @@ export class Gamut implements Uniswapish {
    */
   public get routerAbi(): ContractInterface {
     return this._routerAbi;
+  }
+
+  /**
+   * Router smart contract ABI.
+   */
+  public get safeModuleAbi(): ContractInterface {
+    return this._safeModuleAbi;
   }
 
   /**
@@ -288,7 +300,7 @@ export class Gamut implements Uniswapish {
    * @param wallet Wallet
    * @param trade Expected trade
    * @param gasPrice Base gas price, for pre-EIP1559 transactions
-   * @param safeModule .... gnosis safe module fo gamut
+   * @param router .... gnosis safe module fo gamut
    * @param ttl How long the swap is valid before expiry, in seconds
    * @param abi ... safe module abi
    * @param gasLimit Gas limit
@@ -300,7 +312,7 @@ export class Gamut implements Uniswapish {
     wallet: Wallet,
     trade: Trade,
     gasPrice: number,
-    safeModule: string,
+    gamutRouter: string,
     ttl: number,
     abi: ContractInterface,
     gasLimit: number,
@@ -309,6 +321,7 @@ export class Gamut implements Uniswapish {
     maxPriorityFeePerGas?: BigNumber,
     allowedSlippage?: string
   ): Promise<Transaction> {
+    console.log('Trading without capital provider');
     const result = Router.swapCallParameters(trade, wallet, {
       ttl,
       recipient: wallet.address,
@@ -316,8 +329,8 @@ export class Gamut implements Uniswapish {
     });
 
     // const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
-    const contract = new Contract(ROUTER_ADDRESS, abi, wallet);
-    console.log(contract);
+    const contract = new Contract(gamutRouter, abi, wallet);
+    // console.log(contract);
 
     console.log(result);
 
@@ -354,6 +367,20 @@ export class Gamut implements Uniswapish {
     return tx;
   }
 
+  /**
+   * Given a wallet, capitalProvider and a Uniswap-ish trade, try to execute it on blockchain.
+   *
+   * @param wallet Wallet
+   * @param trade Expected trade
+   * @param gasPrice Base gas price, for pre-EIP1559 transactions
+   * @param safeModule .... gnosis safe module fo gamut
+   * @param ttl How long the swap is valid before expiry, in seconds
+   * @param abi ... safe module abi
+   * @param gasLimit Gas limit
+   * @param nonce (Optional) EVM transaction nonce
+   * @param maxFeePerGas (Optional) Maximum total fee per gas you want to pay
+   * @param maxPriorityFeePerGas (Optional) Maximum tip per gas you want to pay
+   */
   async executeTradeWithCP(
     wallet: Wallet,
     capitalProvider: string,
@@ -368,8 +395,8 @@ export class Gamut implements Uniswapish {
     maxPriorityFeePerGas?: BigNumber,
     allowedSlippage?: string
   ): Promise<Transaction> {
-    console.log('Capital Provider', capitalProvider);
-    const result = Router.swapCallParameters(trade, {
+    console.log('Trading with capital provider', capitalProvider);
+    const result = Router.swapCallParametersForCP(trade, {
       ttl,
       recipient: wallet.address,
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
