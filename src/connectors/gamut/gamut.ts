@@ -402,7 +402,8 @@ export class Gamut implements Uniswapish {
       allowedSlippage: this.getAllowedSlippage(allowedSlippage),
     });
 
-    const contract = new Contract(SAFE_MODULE_ADDRESS, abi, wallet);
+    const contract = new Contract(capitalProvider, safeModuleAbi, wallet);
+
     if (nonce === undefined) {
       nonce = await this.kava.nonceManager.getNextNonce(wallet.address);
     }

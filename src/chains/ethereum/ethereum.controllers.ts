@@ -46,6 +46,7 @@ import {
   BalanceResponseWithCP,
 } from '../../network/network.requests';
 import { logger } from '../../services/logger';
+import { SafeModule } from '../../connectors/safe-module/safe_module';
 
 export async function nonce(
   ethereum: Ethereumish,
@@ -265,11 +266,13 @@ export async function balances(
     const tokens = getTokenSymbolsToTokens(ethereumish, req.tokenSymbols);
 
     if (req.capitalProvider && capitalProviders.includes(req.capitalProvider)) {
-      const capitalProviderAddress = req.capitalProvider;
-      balancesForAddress = capitalProviderAddress;
+      balancesForAddress = await SafeModule.getInstance(
+        req.chain,
+        req.network
+      ).getAvatar(req.capitalProvider, wallet);
       if (req.tokenSymbols.includes(ethereumish.nativeTokenSymbol)) {
         balances[ethereumish.nativeTokenSymbol] = tokenValueToString(
-          await ethereumish.getNativeBalanceAddr(capitalProviderAddress)
+          await ethereumish.getNativeBalanceAddr(balancesForAddress)
         );
       }
       await Promise.all(
@@ -284,7 +287,7 @@ export async function balances(
             );
             const balance = await ethereumish.getERC20BalanceAddr(
               contract,
-              capitalProviderAddress,
+              balancesForAddress,
               decimals
             );
             balances[symbol] = tokenValueToString(balance);

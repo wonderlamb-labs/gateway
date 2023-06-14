@@ -39,6 +39,7 @@ import { Near } from '../../chains/near/near';
 import { getChain } from '../connection-manager';
 import { Ethereumish } from '../common-interfaces';
 import { SafeModule } from '../../connectors/safe-module/safe_module';
+import { Wallet } from 'ethers';
 
 export function convertXdcAddressToEthAddress(publicKey: string): string {
   return publicKey.length === 43 && publicKey.slice(0, 3) === 'xdc'
@@ -165,7 +166,10 @@ export async function addWallet(
       const safeModule = SafeModule.getInstance(req.chain, req.network);
       for (let capitalProvider in req.capitalProviders) {
         const isWalletAllowed: boolean =
-          await safeModule.isWalletAllowedForCapitalProvider(address, address);
+          await safeModule.isWalletAllowedForCapitalProvider(
+            address,
+            new Wallet(req.privateKey)
+          );
 
         if (capitalProvider && !isWalletAllowed) {
           console.log(
@@ -208,11 +212,13 @@ export async function addCapitalProvider(
   req: AddCapitalProviderToWalletRequest
 ): Promise<AddCapitalProviderResponse> {
   try {
+    const chain: Ethereumish = await getChain(req.chain, req.network);
+    const wallet = await chain.getWallet(req.walletAddress);
     const safeModule = SafeModule.getInstance(req.chain, req.network);
     const isWalletAllowed: boolean =
       await safeModule.isWalletAllowedForCapitalProvider(
-        req.walletAddress,
-        req.capitalProviderAddress
+        req.capitalProviderAddress,
+        wallet
       );
 
     if (!isWalletAllowed) {
