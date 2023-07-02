@@ -110,10 +110,14 @@ export async function allowances(
         req.capitalProvider &&
         capitalProviders.includes(req.capitalProvider)
       ) {
+        const avatar = await SafeModule.getInstance(
+          req.chain,
+          req.network
+        ).getAvatar(req.capitalProvider, wallet);
         approvals[symbol] = tokenValueToString(
           await ethereumish.getERC20AllowanceAddr(
             contract,
-            req.capitalProvider,
+            avatar,
             spender,
             tokens[symbol].decimals
           )
