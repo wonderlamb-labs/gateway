@@ -12,4 +12,4 @@ ttl: 600
 
 contractAddresses:
   mainnet:
-    routerAddress: '0x923A7273480e73439b73b065d096c58034968504'
+    routerAddress: '0xC04bf3d7f99DeADF808EB9095bf46dBc387EA34c'
