@@ -17,7 +17,7 @@ import {
   FEES_NUMERATOR,
   FEES_DENOMINATOR,
   ChainId,
-  AddressPoolMap 
+  AddressPoolMap
 } from '../constants'
 // import HedgeFactoryAbi from "../abis/HedgeFactory.json";
 import { sqrt, parseBigintIsh } from '../utils'
@@ -33,6 +33,7 @@ const composeKey = (token0: Token, token1: Token) => `${token0.address}-${token1
 export class Pair {
   public readonly liquidityToken: Token
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
+  private readonly weights: [BigintIsh, BigintIsh]
 
   // public static async getPoolAddress(provider: BaseProvider, tokenA: string, tokenB: string): Promise<string> {
   //   const chainId = 2222;
@@ -48,7 +49,7 @@ export class Pair {
     return AddressPoolMap[key as keyof typeof AddressPoolMap];
   }
 
-  public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount, ) {
+  public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount, weightA: BigintIsh, weightB: BigintIsh) {
     const tokenAmounts = tokenAmountA.token.sortsBefore(tokenAmountB.token) // does safety checks
       ? [tokenAmountA, tokenAmountB]
       : [tokenAmountB, tokenAmountA]
@@ -60,6 +61,7 @@ export class Pair {
       'Gamut LPs'
     )
     this.tokenAmounts = tokenAmounts as [TokenAmount, TokenAmount]
+    this.weights = [weightA, weightB]
   }
 
   /**
@@ -128,17 +130,16 @@ export class Pair {
     }
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
-    const inputAmountWithFee = JSBI.multiply(inputAmount.raw, FEES_NUMERATOR)
-    const numerator = JSBI.multiply(inputAmountWithFee, outputReserve.raw)
-    const denominator = JSBI.add(JSBI.multiply(inputReserve.raw, FEES_DENOMINATOR), inputAmountWithFee)
+    const inputAmountWithFee = JSBI.BigInt(Math.round(Number(inputAmount.raw) * 0.9975));
+    const calculatedSwap = this.calculateSwap(inputAmount.token.name, inputAmountWithFee);
     const outputAmount = new TokenAmount(
       inputAmount.token.equals(this.token0) ? this.token1 : this.token0,
-      JSBI.divide(numerator, denominator)
+      calculatedSwap
     )
     if (JSBI.equal(outputAmount.raw, ZERO)) {
       throw new InsufficientInputAmountError()
     }
-    return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount))]
+    return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), ...this.weights)]
   }
 
   public getInputAmount(outputAmount: TokenAmount): [TokenAmount, Pair] {
@@ -159,8 +160,90 @@ export class Pair {
       outputAmount.token.equals(this.token0) ? this.token1 : this.token0,
       JSBI.add(JSBI.divide(numerator, denominator), ONE)
     )
-    return [inputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount))]
+    return [inputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), ...this.weights)]
   }
+
+  private getScalingFactor(t: TokenAmount): JSBI {
+    return JSBI.BigInt(10 ** (18 - t.token.decimals));
+  }
+
+  private upscale(amount: JSBI, scalingFactor: JSBI) {
+    return JSBI.multiply(amount, scalingFactor);
+  }
+
+  private downscale(amount: JSBI, scalingFactor: JSBI) {
+    return JSBI.divide(amount, scalingFactor);
+  }
+
+  private mulDown(x: JSBI, y: JSBI): JSBI {
+    return JSBI.divide(JSBI.multiply(x, y), JSBI.BigInt(10 ** 18));
+  }
+
+  private divDown(x: JSBI, y: JSBI): JSBI {
+    invariant(Number(y) != 0, "denominator cannot be zero")
+    if (Number(x) == 0) {
+      return JSBI.BigInt(0);
+    }
+    return JSBI.divide(JSBI.multiply(x, JSBI.BigInt(10 ** 18)), y)
+  }
+
+  private powUp(x: JSBI, y: JSBI): JSBI {
+    let n1 = Number(x) / 10 ** 18;
+    let n2 = Number(y) / 10 ** 18;
+    let n3 = Math.round((n1 ** n2) * 10 ** 18);
+    return JSBI.BigInt(n3)
+  }
+
+  // all calculations in here done in exa
+  public calculateSwap(inToken: string | undefined, input: BigintIsh): JSBI {
+    if (inToken === undefined) {
+      throw Error("Undefined Token Name in Calculate Swap")
+    }
+    let balance_from;
+    let balance_to;
+    let weight_from;
+    let weight_to;
+
+    let scaling_factor_a = this.getScalingFactor(this.tokenAmounts[0])
+    let scaling_factor_b = this.getScalingFactor(this.tokenAmounts[1])
+    let scaling_factor_out;
+    let amountIn;
+
+    if (inToken.toLowerCase() == this.tokenAmounts[0].token.name?.toLowerCase()) {
+      balance_from = this.upscale(this.tokenAmounts[0].numerator, scaling_factor_a);
+      balance_to = this.upscale(this.tokenAmounts[1].numerator, scaling_factor_b);
+      weight_from = this.weights[0];
+      weight_to = this.weights[1];
+      amountIn = this.upscale(JSBI.BigInt(input), scaling_factor_a);
+      scaling_factor_out = scaling_factor_b;
+    } else {
+      balance_from = this.upscale(this.tokenAmounts[1].numerator, scaling_factor_b);
+      balance_to = this.upscale(this.tokenAmounts[0].numerator, scaling_factor_a);
+      weight_from = this.weights[1];
+      weight_to = this.weights[0];
+      amountIn = this.upscale(JSBI.BigInt(input), scaling_factor_b);
+      scaling_factor_out = scaling_factor_a;
+    }
+
+    let EXA: JSBI = JSBI.BigInt(10 ** 18);
+    let balanceIn = balance_from;
+    let weightIn = JSBI.BigInt(weight_from);
+    let weightOut = JSBI.BigInt(weight_to);
+    let balanceOut = JSBI.BigInt(balance_to);
+
+    let exponentFracFraction: JSBI = this.divDown(balanceIn, JSBI.add(balanceIn, amountIn));
+    let exponentFraction = this.divDown(JSBI.subtract(EXA, exponentFracFraction), JSBI.add(EXA, exponentFracFraction));
+
+    let exponentNumerator: JSBI = JSBI.subtract(weightIn, this.mulDown(weightIn, exponentFraction));
+    let exponentDenominator: JSBI = JSBI.add(weightOut, this.mulDown(weightIn, exponentFraction));
+
+    let exponent = this.divDown(exponentNumerator, exponentDenominator);
+
+    let amountOut = JSBI.subtract(EXA, this.powUp(exponentFracFraction, exponent))
+
+    amountOut = this.downscale(this.mulDown(balanceOut, amountOut), scaling_factor_out);
+    return amountOut;
+  };
 
   public getLiquidityMinted(
     totalSupply: TokenAmount,

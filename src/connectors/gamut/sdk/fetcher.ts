@@ -73,7 +73,9 @@ export abstract class Fetcher {
       throw new Error("Invalid pair address")
     }
     const [reserves0, reserves1] = await new Contract(addr, GamutPairAbi, provider).getPoolBalancesAndChangeBlock()
+    const [weight0, weight1] = await new Contract(addr, GamutPairAbi, provider).getWeights()
+    
     const balances = tokenA.sortsBefore(tokenB) ? [reserves0, reserves1] : [reserves1, reserves0]
-    return new Pair(new TokenAmount(tokenA, balances[0]), new TokenAmount(tokenB, balances[1]))
+    return new Pair(new TokenAmount(tokenA, balances[0]), new TokenAmount(tokenB, balances[1]), weight0, weight1)
   }
 }

@@ -40,10 +40,10 @@
     {
       "value": "usdt",
       "chainId": 2222,
-      "address": "0x332730a4F6E03D9C55829435f10360E13cfA41Ff",
+      "address": "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
       "symbol": "USDT",
-      "name": "Binance Pegged USD",
-      "decimals": 18,
+      "name": "Axelar USDC",
+      "decimals": 6,
       "logoURL": "https://cryptologos.cc/logos/binance-usd-busd-logo.png",
       "tags": ["stablecoin", "erc20"]
     },
