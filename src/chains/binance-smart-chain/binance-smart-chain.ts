@@ -9,6 +9,8 @@ import { PancakeSwapConfig } from '../../connectors/pancakeswap/pancakeswap.conf
 import { SushiswapConfig } from '../../connectors/sushiswap/sushiswap.config';
 import { ConfigManagerV2 } from '../../services/config-manager-v2';
 import { OpenoceanConfig } from '../../connectors/openocean/openocean.config';
+// import { DexOpenOceanConfig } from '../../connectors/dexopenocean/dexOpenOcean.config';
+import { NewOpenoceanConfig } from '../../connectors/newopenocean/newOpenOcean.config';
 
 export class BinanceSmartChain extends EthereumBase implements Ethereumish {
   private static _instances: { [name: string]: BinanceSmartChain };
@@ -94,6 +96,9 @@ export class BinanceSmartChain extends EthereumBase implements Ethereumish {
 
   getSpender(reqSpender: string): string {
     let spender: string;
+    // if (reqSpender === 'dexopenocean') {
+    //   spender = DexOpenOceanConfig.config.routerAddress(this._chain);
+    // } else
     if (reqSpender === 'pancakeswap') {
       spender = PancakeSwapConfig.config.routerAddress(this._chain);
     } else if (reqSpender === 'sushiswap') {
@@ -102,7 +107,15 @@ export class BinanceSmartChain extends EthereumBase implements Ethereumish {
         this._chain
       );
     } else if (reqSpender === 'openocean') {
-      spender = OpenoceanConfig.config.routerAddress('binance-smart-chain', this._chain);
+      spender = OpenoceanConfig.config.routerAddress(
+        'binance-smart-chain',
+        this._chain
+      );
+    } else if (reqSpender === 'newopenocean') {
+      spender = NewOpenoceanConfig.config.routerAddress(
+        'ethereum',
+        this._chain
+      );
     } else {
       spender = reqSpender;
     }

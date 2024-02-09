@@ -8,6 +8,7 @@ import { Kava } from '../chains/kava/kava';
 import { Xdc } from '../chains/xdc/xdc';
 import { MadMeerkat } from '../connectors/mad_meerkat/mad_meerkat';
 import { Gamut } from '../connectors/gamut/gamut';
+import { DexOpenOcean } from '../connectors/dexopenocean/dexOpenOcean';
 import { Openocean } from '../connectors/openocean/openocean';
 import { Pangolin } from '../connectors/pangolin/pangolin';
 import { Perp } from '../connectors/perp/perp';
@@ -38,6 +39,7 @@ import { Near } from '../chains/near/near';
 import { Ref } from '../connectors/ref/ref';
 import { Xsswap } from '../connectors/xsswap/xsswap';
 import { DexalotCLOB } from '../connectors/dexalot/dexalot';
+// import { logger } from './logger';
 
 export type ChainUnion = Ethereumish | Nearish | Injective | Xdcish;
 
@@ -124,6 +126,8 @@ export async function getConnector<T>(
     connector === 'uniswapLP'
   ) {
     connectorInstance = UniswapLP.getInstance(chain, network);
+  } else if (chain === 'binance-smart-chain' && connector === 'dexopenocean') {
+    connectorInstance = DexOpenOcean.getInstance(chain, network);
   } else if (chain === 'kava' && connector === 'gamut') {
     connectorInstance = Gamut.getInstance(chain, network);
   } else if (chain === 'ethereum' && connector === 'perp') {
@@ -168,4 +172,3 @@ export async function getConnector<T>(
 
   return connectorInstance as Connector<T>;
 }
-

@@ -1,0 +1,18 @@
+# how much the execution price is allowed to move unfavorably from the trade
+# execution price. It uses a rational number for precision.
+allowedSlippage: '2/100'
+
+# the maximum gas used to estimate gasCost for a uniswap trade.
+# TODO: Figure this out
+gasLimitEstimate: 150688
+
+# how long a trade is valid in seconds. After time passes uniswap will not
+# perform the trade, but the gas will still be sent.
+ttl: 600
+
+capitalProvider: '0xA874F696E9d1AC19a34D9B265cc2100E514dE208'
+
+contractAddresses:
+  binance-smart-chain:
+    mainnet:
+      routerAddress: '0x8AA07F3180429709f77C859B9537F9aA1af193a0'

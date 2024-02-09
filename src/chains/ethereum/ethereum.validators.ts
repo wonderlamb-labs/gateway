@@ -53,10 +53,12 @@ export const validateSpender: Validator = mkValidator(
       val === 'uniswapLP' ||
       val === 'pangolin' ||
       val === 'gamut' ||
+      // val === 'dexopenocean' ||
       val === 'traderjoe' ||
       val === 'sushiswap' ||
       val === 'viperswap' ||
       val === 'openocean' ||
+      val === 'newopenocean' ||
       val === 'quickswap' ||
       val === 'defikingdoms' ||
       val === 'defira' ||
