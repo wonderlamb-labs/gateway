@@ -8,7 +8,8 @@ import { Kava } from '../chains/kava/kava';
 import { Xdc } from '../chains/xdc/xdc';
 import { MadMeerkat } from '../connectors/mad_meerkat/mad_meerkat';
 import { Gamut } from '../connectors/gamut/gamut';
-import { DexOpenOcean } from '../connectors/dexopenocean/dexOpenOcean';
+// import { DexOpenOcean } from '../connectors/dexopenocean/dexOpenOcean';
+import { Newopenocean } from '../connectors/newopenocean/newOpenOcean';
 import { Openocean } from '../connectors/openocean/openocean';
 import { Pangolin } from '../connectors/pangolin/pangolin';
 import { Perp } from '../connectors/perp/perp';
@@ -114,6 +115,10 @@ export async function getConnector<T>(
 ): Promise<Connector<T>> {
   let connectorInstance: ConnectorUnion;
 
+  // else if (chain === 'binance-smart-chain' && connector === 'dexopenocean') {
+  //   connectorInstance = DexOpenOcean.getInstance(chain, network);
+  // }
+
   if (
     (chain === 'ethereum' || chain === 'polygon') &&
     connector === 'uniswap'
@@ -126,8 +131,8 @@ export async function getConnector<T>(
     connector === 'uniswapLP'
   ) {
     connectorInstance = UniswapLP.getInstance(chain, network);
-  } else if (chain === 'binance-smart-chain' && connector === 'dexopenocean') {
-    connectorInstance = DexOpenOcean.getInstance(chain, network);
+  } else if (chain === 'binance-smart-chain' && connector === 'newopenocean') {
+    connectorInstance = Newopenocean.getInstance(chain, network);
   } else if (chain === 'kava' && connector === 'gamut') {
     connectorInstance = Gamut.getInstance(chain, network);
   } else if (chain === 'ethereum' && connector === 'perp') {

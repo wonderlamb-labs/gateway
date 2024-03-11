@@ -21,7 +21,7 @@ import { XsswapConfig } from './xsswap/xsswap.config';
 import { ConnectorsResponse } from './connectors.request';
 import { DexalotCLOBConfig } from './dexalot/dexalot.clob.config';
 import { ZigZagConfig } from './zigzag/zigzag.config';
-import { DexOpenOceanConfig } from './dexopenocean/dexOpenOcean.config';
+// import { DexOpenOceanConfig } from './dexopenocean/dexOpenOcean.config';
 import { NewOpenoceanConfig } from './newopenocean/newOpenOcean.config';
 
 export namespace ConnectorsRoutes {
@@ -115,11 +115,11 @@ export namespace ConnectorsRoutes {
             trading_type: GamutConfig.config.tradingTypes,
             available_networks: GamutConfig.config.availableNetworks,
           },
-          {
-            name: 'dexopenocean',
-            trading_type: DexOpenOceanConfig.config.tradingTypes,
-            available_networks: DexOpenOceanConfig.config.availableNetworks,
-          },
+          // {
+          //   name: 'dexopenocean',
+          //   trading_type: DexOpenOceanConfig.config.tradingTypes,
+          //   available_networks: DexOpenOceanConfig.config.availableNetworks,
+          // },
           {
             name: 'injective',
             trading_type: InjectiveCLOBConfig.config.tradingTypes('spot'),

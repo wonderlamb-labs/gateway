@@ -12,9 +12,7 @@ export namespace GamutConfig {
   }
 
   export const config: ExchangeConfig = {
-    allowedSlippage: ConfigManagerV2.getInstance().get(
-      'gamut.allowedSlippage'
-    ),
+    allowedSlippage: ConfigManagerV2.getInstance().get('gamut.allowedSlippage'),
     gasLimitEstimate: ConfigManagerV2.getInstance().get(
       `gamut.gasLimitEstimate`
     ),
@@ -24,8 +22,6 @@ export namespace GamutConfig {
         'gamut.contractAddresses.' + network + '.routerAddress'
       ),
     tradingTypes: ['EVM_AMM'],
-    availableNetworks: [
-      { chain: 'kava', networks: ['mainnet'] },
-    ],
+    availableNetworks: [{ chain: 'kava', networks: ['mainnet'] }],
   };
 }

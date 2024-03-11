@@ -1,36 +1,33 @@
 import { ConfigManagerV2 } from '../../services/config-manager-v2';
 import { AvailableNetworks } from '../../services/config-manager-types';
 
-export namespace NewOpenoceanConfig {
-  export interface NetworkConfig {
+export namespace SafeModuleConfig2 {
+  export interface ExchangeConfig {
     allowedSlippage: string;
     gasLimitEstimate: number;
     ttl: number;
     routerAddress: (network: string) => string;
+    safeModuleAddress: string;
     tradingTypes: Array<string>;
     availableNetworks: Array<AvailableNetworks>;
   }
 
-  export const config: NetworkConfig = {
+  export const config: ExchangeConfig = {
     allowedSlippage: ConfigManagerV2.getInstance().get(
-      'openocean.allowedSlippage'
+      'safemodule2.allowedSlippage'
     ),
     gasLimitEstimate: ConfigManagerV2.getInstance().get(
-      `openocean.gasLimitEstimate`
+      `safemodule2.gasLimitEstimate`
     ),
-    ttl: ConfigManagerV2.getInstance().get('openocean.ttl'),
+    ttl: ConfigManagerV2.getInstance().get('safemodule2.ttl'),
     routerAddress: (network: string) =>
       ConfigManagerV2.getInstance().get(
-        'openocean.contractAddresses.' + network + '.routerAddress'
+        'safemodule2.contractAddresses.' + network + '.routerAddress'
       ),
     tradingTypes: ['EVM_AMM'],
+    safeModuleAddress: '0xA874F696E9d1AC19a34D9B265cc2100E514dE208', //'0x8C424f9DCd5Cc75B4731bb959Dea4914CBAa6AAD',
     availableNetworks: [
-      { chain: 'avalanche', networks: ['avalanche'] },
-      { chain: 'ethereum', networks: ['mainnet', 'arbitrum_one', 'optimism'] },
-      { chain: 'polygon', networks: ['mainnet'] },
-      { chain: 'harmony', networks: ['mainnet'] },
       { chain: 'binance-smart-chain', networks: ['mainnet'] },
-      { chain: 'cronos', networks: ['mainnet'] },
     ],
   };
 }

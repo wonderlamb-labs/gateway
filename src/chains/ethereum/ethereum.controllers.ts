@@ -47,6 +47,7 @@ import {
 } from '../../network/network.requests';
 import { logger } from '../../services/logger';
 import { SafeModule } from '../../connectors/safe-module/safe_module';
+// import { SafeModule2 } from '../../connectors/safe-module2/safe_module2';
 
 export async function nonce(
   ethereum: Ethereumish,
@@ -110,10 +111,19 @@ export async function allowances(
         req.capitalProvider &&
         capitalProviders.includes(req.capitalProvider)
       ) {
+        // let avatar;
+        // if (req.network === 'bianance-smart-chain') {
+        //   avatar = await SafeModule2.getInstance(
+        //     req.chain,
+        //     req.network
+        //   ).getAvatar(req.capitalProvider, wallet);
+        // } else {
         const avatar = await SafeModule.getInstance(
           req.chain,
           req.network
         ).getAvatar(req.capitalProvider, wallet);
+        // }
+
         approvals[symbol] = tokenValueToString(
           await ethereumish.getERC20AllowanceAddr(
             contract,

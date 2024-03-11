@@ -20,10 +20,6 @@ configurations:
     configurationPath: gamut.yml
     schemaPath: gamut-schema.json
 
-  $namespace dexopenocean:
-    configurationPath: dexopenocean.yml
-    schemaPath: dexopenocean-schema.json
-
   $namespace avalanche:
     configurationPath: avalanche.yml
     schemaPath: ethereum-schema.json

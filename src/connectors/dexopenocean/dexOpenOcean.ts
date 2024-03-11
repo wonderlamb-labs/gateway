@@ -30,9 +30,9 @@ import {
 } from '../../services/error-handler';
 import { DexOpenOceanConfig } from './dexOpenOcean.config';
 import safeModuleAbi from './safe_module_abi.json';
-import dexModuleAbi from './dexmodule_abi.json';
-import { Contract, ethers } from 'ethers';
-import { DEX_MODULE } from './constant';
+// import dexModuleAbi from './dexmodule_abi.json';
+import { Contract } from 'ethers';
+// import { DEX_MODULE } from './constant';
 
 export function newFakeTrade(
   tokenIn: Token,
@@ -523,11 +523,11 @@ export class DexOpenOcean implements Uniswapish {
     }
     if (swapRes.status == 200 && swapRes.data.code == 200) {
       const swapData = swapRes.data.data;
-      const dexModuleContract = new ethers.Contract(
-        DEX_MODULE,
-        dexModuleAbi,
-        wallet
-      );
+      // const dexModuleContract = new ethers.Contract(
+      //   capitalProvider,
+      //   dexModuleAbi,
+      //   wallet
+      // );
       const contract = new Contract(capitalProvider, safeModuleAbi, wallet);
       if (nonce === undefined) {
         nonce = await this.chainInstance.nonceManager.getNextNonce(
@@ -537,16 +537,29 @@ export class DexOpenOcean implements Uniswapish {
 
       const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
 
-      const tx = await contract.execTransaction(
-        DEX_MODULE,
-        0, //msg.value, must have to handle case for eth swap
-        dexModuleContract.interface.encodeFunctionData('useAPIData', [
-          inToken,
-          outToken,
-          trade.inputAmount.toExact(),
-          wallet,
-          swapData.data,
-        ]),
+      // const tx = await contract.execTransaction(
+      //   DEX_MODULE,
+      //   0, //msg.value, must have to handle case for eth swap
+      //   dexModuleContract.interface.encodeFunctionData('useAPIData', [
+      //     inToken,
+      //     outToken,
+      //     trade.inputAmount.toExact(),
+      //     wallet,
+      //     swapData.data,
+      //   ]),
+      //   {
+      //     gasLimit: BigNumber.from(gas.toString()),
+      //     nonce: nonce,
+      //     gasPrice: maxFeePerGas,
+      //   }
+      // );
+
+      const tx = await contract.useAPIData(
+        inToken,
+        outToken,
+        trade.inputAmount.toExact(),
+        wallet,
+        swapData.data,
         {
           gasLimit: BigNumber.from(gas.toString()),
           nonce: nonce,

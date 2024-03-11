@@ -1,5 +1,5 @@
 import { percentRegexp } from '../../services/config-manager-v2';
-import { BigNumber, ContractInterface, Transaction, Wallet } from 'ethers';
+import { BigNumber, ContractInterface, Wallet } from 'ethers';
 
 import {
   Token,
@@ -11,24 +11,36 @@ import {
   Price,
 } from '@uniswap/sdk';
 import Decimal from 'decimal.js-light';
-import axios from 'axios';
+// import axios from 'axios';
 import { logger } from '../../services/logger';
-import { Avalanche } from '../../chains/avalanche/avalanche';
-import { Ethereum } from '../../chains/ethereum/ethereum';
-import { Polygon } from '../../chains/polygon/polygon';
-import { Harmony } from '../../chains/harmony/harmony';
+// import { Avalanche } from '../../chains/avalanche/avalanche';
+// import { Ethereum } from '../../chains/ethereum/ethereum';
+// import { Polygon } from '../../chains/polygon/polygon';
+// import { Harmony } from '../../chains/harmony/harmony';
 import { BinanceSmartChain } from '../../chains/binance-smart-chain/binance-smart-chain';
-import { Cronos } from '../../chains/cronos/cronos';
+// import { Cronos } from '../../chains/cronos/cronos';
 import { ExpectedTrade, Uniswapish } from '../../services/common-interfaces';
 import {
   HttpException,
   TRADE_FAILED_ERROR_CODE,
   TRADE_FAILED_ERROR_MESSAGE,
-  UniswapishPriceError,
+  // UniswapishPriceError,
   UNKNOWN_ERROR_ERROR_CODE,
   UNKNOWN_ERROR_MESSAGE,
+  UniswapishPriceError,
 } from '../../services/error-handler';
 import { NewOpenoceanConfig } from './newOpenOcean.config';
+
+// import safeModuleAbi from './safe_module_abi.json';
+// import gnosisSafeModuleAbi from './gnosis_abi.json';
+import routerAbi from './dexmodule_abi.json';
+
+// import { Uniswapish } from '../../services/common-interfaces';
+
+import axios from 'axios';
+// import { DEX_MODULE } from '../dexopenocean/constant';
+import { Contract, Transaction } from 'ethers';
+import { parseEther } from 'ethers/lib/utils';
 
 export function newFakeTrade(
   tokenIn: Token,
@@ -54,25 +66,27 @@ export function newFakeTrade(
 
 export class Newopenocean implements Uniswapish {
   private static _instances: { [name: string]: Newopenocean };
-  private chainInstance;
-  private _chain: string;
-  private _network: string;
+  private bsc: BinanceSmartChain;
   private _router: string;
+  private _routerAbi: ContractInterface;
+  // private _safeModuleAbi: ContractInterface;
   private _gasLimitEstimate: number;
   private _ttl: number;
   private chainId;
   private tokenList: Record<string, Token> = {};
   private _ready: boolean = false;
 
-  private constructor(chain: string, network: string) {
-    this._chain = chain;
-    this._network = network;
+  private constructor(network: string) {
+    // this._chain = chain;
     const config = NewOpenoceanConfig.config;
-    this.chainInstance = this.getChainInstance(network);
-    this.chainId = this.chainInstance.chainId;
-    this._router = config.routerAddress(chain, network);
+    this.bsc = BinanceSmartChain.getInstance(network);
+    this.chainId = this.bsc.chainId;
+    this._router = config.routerAddress(network);
     this._ttl = config.ttl;
     this._gasLimitEstimate = config.gasLimitEstimate;
+
+    // this._safeModuleAbi = safeModuleAbi;
+    this._routerAbi = routerAbi;
   }
 
   public static getInstance(chain: string, network: string): Newopenocean {
@@ -80,31 +94,10 @@ export class Newopenocean implements Uniswapish {
       Newopenocean._instances = {};
     }
     if (!(chain + network in Newopenocean._instances)) {
-      Newopenocean._instances[chain + network] = new Newopenocean(
-        chain,
-        network
-      );
+      Newopenocean._instances[chain + network] = new Newopenocean(network);
     }
 
     return Newopenocean._instances[chain + network];
-  }
-
-  public getChainInstance(network: string) {
-    if (this._chain === 'ethereum') {
-      return Ethereum.getInstance(network);
-    } else if (this._chain === 'avalanche') {
-      return Avalanche.getInstance(network);
-    } else if (this._chain === 'polygon') {
-      return Polygon.getInstance(network);
-    } else if (this._chain === 'harmony') {
-      return Harmony.getInstance(network);
-    } else if (this._chain === 'binance-smart-chain') {
-      return BinanceSmartChain.getInstance(network);
-    } else if (this._chain === 'cronos') {
-      return Cronos.getInstance(network);
-    } else {
-      throw new Error('unsupported chain');
-    }
   }
 
   /**
@@ -118,10 +111,10 @@ export class Newopenocean implements Uniswapish {
   }
 
   public async init() {
-    if (!this.chainInstance.ready()) {
-      await this.chainInstance.init();
+    if (!this.bsc.ready()) {
+      await this.bsc.init();
     }
-    for (const token of this.chainInstance.storedTokenList) {
+    for (const token of this.bsc.storedTokenList) {
       this.tokenList[token.address] = new Token(
         this.chainId,
         token.address,
@@ -148,8 +141,15 @@ export class Newopenocean implements Uniswapish {
    * Router smart contract ABI.
    */
   public get routerAbi(): ContractInterface {
-    return '';
+    return this._routerAbi;
   }
+
+  /**
+   * Router smart contract ABI.
+   */
+  // public get safeModuleAbi(): ContractInterface {
+  //   return this._safeModuleAbi;
+  // }
 
   /**
    * Default gas limit for swap transactions.
@@ -165,29 +165,7 @@ export class Newopenocean implements Uniswapish {
     return this._ttl;
   }
 
-  public get chainName(): string {
-    if (this._chain === 'ethereum' && this._network === 'mainnet') {
-      return 'eth';
-    } else if (this._chain === 'ethereum' && this._network === 'arbitrum_one') {
-      return 'arbitrum';
-    } else if (this._chain === 'ethereum' && this._network === 'optimism') {
-      return 'optimism';
-    } else if (this._chain === 'avalanche') {
-      return 'avax';
-    } else if (this._chain === 'binance-smart-chain') {
-      return 'bsc';
-    }
-    // else if (this._chain === 'polygon') {
-    //   return 'polygon';
-    // } else if (this._chain === 'harmony') {
-    //   return 'harmony';
-    // } else if (this._chain === 'cronos') {
-    //   return 'cronos';
-    // }
-    return this._chain;
-  }
-
-  getSlippageNumberage(): number {
+  public getSlippageNumberage(): number {
     const allowedSlippage = NewOpenoceanConfig.config.allowedSlippage;
     const nd = allowedSlippage.match(percentRegexp);
     if (nd) return Number(nd[1]);
@@ -211,19 +189,21 @@ export class Newopenocean implements Uniswapish {
     quoteToken: Token,
     amount: BigNumber
   ): Promise<ExpectedTrade> {
+    // ExpectedTrade promise val
     logger.info(
       `estimateSellTrade getting amounts out baseToken(${baseToken.symbol}): ${baseToken.address} - quoteToken(${quoteToken.symbol}): ${quoteToken.address}.`
     );
-
+    logger.info(`amount: ${amount}`);
     const reqAmount = new Decimal(amount.toString())
       .div(new Decimal((10 ** baseToken.decimals).toString()))
       .toNumber();
     logger.info(`reqAmount(${baseToken.symbol}):${reqAmount}`);
-    const gasPrice = this.chainInstance.gasPrice;
+    const gasPrice = this.bsc.gasPrice;
     let quoteRes;
     try {
       quoteRes = await axios.get(
-        `https://open-api.openocean.finance/v3/${this.chainName}/quote`,
+        // 'https://open-api.openocean.finance/v3/bsc/swap_quote?inTokenAddress=0x55d398326f99059ff775485246999027b3197955&outTokenAddress=0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d&amount=1&slippage=1&gasPrice=5&account=0x8AA07F3180429709f77C859B9537F9aA1af193a0'
+        `https://open-api.openocean.finance/v3/bsc/quote`,
         {
           params: {
             inTokenAddress: baseToken.address,
@@ -251,6 +231,7 @@ export class Newopenocean implements Uniswapish {
       }
     }
 
+    // logger.info(`quoteRes: (${JSON.stringify(quoteRes)})`);
     if (quoteRes.status == 200) {
       if (
         quoteRes.data.code == 200 &&
@@ -299,20 +280,20 @@ export class Newopenocean implements Uniswapish {
     quoteToken: Token,
     baseToken: Token,
     amount: BigNumber
-  ): Promise<ExpectedTrade> {
+  ): Promise<any> {
     logger.info(
       `estimateBuyTrade getting amounts in quoteToken(${quoteToken.symbol}): ${quoteToken.address} - baseToken(${baseToken.symbol}): ${baseToken.address}.`
     );
-
+    logger.info(`amount: ${amount}`);
     const reqAmount = new Decimal(amount.toString())
       .div(new Decimal((10 ** baseToken.decimals).toString()))
       .toNumber();
     logger.info(`reqAmount:${reqAmount}`);
-    const gasPrice = this.chainInstance.gasPrice;
+    const gasPrice = this.bsc.gasPrice;
     let quoteRes;
     try {
       quoteRes = await axios.get(
-        `https://open-api.openocean.finance/v3/${this.chainName}/reverseQuote`,
+        `https://open-api.openocean.finance/v3/bsc/reverseQuote`,
         {
           params: {
             inTokenAddress: baseToken.address,
@@ -340,6 +321,7 @@ export class Newopenocean implements Uniswapish {
       }
     }
     if (quoteRes.status == 200) {
+      logger.info(`data: ${quoteRes.data.data}`);
       if (
         quoteRes.data.code == 200 &&
         Number(quoteRes.data.data.reverseAmount) > 0
@@ -395,73 +377,75 @@ export class Newopenocean implements Uniswapish {
     nonce?: number,
     maxFeePerGas?: BigNumber,
     maxPriorityFeePerGas?: BigNumber
-  ): Promise<Transaction> {
+  ): Promise<any> {
     logger.info(
       `executeTrade ${openoceanRouter}-${ttl}-${abi}-${gasPrice}-${gasLimit}-${nonce}-${maxFeePerGas}-${maxPriorityFeePerGas}.`
     );
-    const inToken: any = trade.route.input;
-    const outToken: any = trade.route.output;
-    let swapRes;
-    try {
-      swapRes = await axios.get(
-        `https://open-api.openocean.finance/v3/${this.chainName}/swap_quote`,
-        {
-          params: {
-            inTokenAddress: inToken.address,
-            outTokenAddress: outToken.address,
-            amount: trade.inputAmount.toExact(),
-            slippage: this.getSlippageNumberage(),
-            account: wallet.address,
-            gasPrice: gasPrice.toString(),
-            referrer: '0x3fb06064b88a65ba9b9eb840dbb5f3789f002642',
-          },
-        }
-      );
-    } catch (e) {
-      if (e instanceof Error) {
-        logger.error(`Could not get trade info. ${e.message}`);
-        throw new HttpException(
-          500,
-          TRADE_FAILED_ERROR_MESSAGE + e.message,
-          TRADE_FAILED_ERROR_CODE
-        );
-      } else {
-        logger.error('Unknown error trying to get trade info.');
-        throw new HttpException(
-          500,
-          UNKNOWN_ERROR_MESSAGE,
-          UNKNOWN_ERROR_ERROR_CODE
-        );
-      }
-    }
-    if (swapRes.status == 200 && swapRes.data.code == 200) {
-      const swapData = swapRes.data.data;
-      return this.chainInstance.nonceManager.provideNonce(
-        nonce,
-        wallet.address,
-        async (nextNonce) => {
-          const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
-          const trans = {
-            nonce: nextNonce,
-            from: swapData.from,
-            to: swapData.to,
-            gasLimit: BigNumber.from(gas.toString()),
-            data: swapData.data,
-            value: BigNumber.from(swapData.value),
-            chainId: this.chainId,
-          };
-          const tx = await wallet.sendTransaction(trans);
-          logger.info(JSON.stringify(tx));
 
-          return tx;
-        }
-      );
-    }
-    throw new HttpException(
-      swapRes.status,
-      `Could not get trade info. ${swapRes.statusText}`,
-      TRADE_FAILED_ERROR_CODE
-    );
+    logger.info(`wallet: ${wallet}, trade: ${trade} `);
+    // const inToken: any = trade.route.input;
+    // const outToken: any = trade.route.output;
+    // let swapRes;
+    // try {
+    //   swapRes = await axios.get(
+    //     `https://open-api.openocean.finance/v3/${this.chainName}/swap_quote`,
+    //     {
+    //       params: {
+    //         inTokenAddress: inToken.address,
+    //         outTokenAddress: outToken.address,
+    //         amount: trade.inputAmount.toExact(),
+    //         slippage: this.getSlippageNumberage(),
+    //         account: wallet.address,
+    //         gasPrice: gasPrice.toString(),
+    //         referrer: '0x3fb06064b88a65ba9b9eb840dbb5f3789f002642',
+    //       },
+    //     }
+    //   );
+    // } catch (e) {
+    //   if (e instanceof Error) {
+    //     logger.error(`Could not get trade info. ${e.message}`);
+    //     throw new HttpException(
+    //       500,
+    //       TRADE_FAILED_ERROR_MESSAGE + e.message,
+    //       TRADE_FAILED_ERROR_CODE
+    //     );
+    //   } else {
+    //     logger.error('Unknown error trying to get trade info.');
+    //     throw new HttpException(
+    //       500,
+    //       UNKNOWN_ERROR_MESSAGE,
+    //       UNKNOWN_ERROR_ERROR_CODE
+    //     );
+    //   }
+    // }
+    // if (swapRes.status == 200 && swapRes.data.code == 200) {
+    //   const swapData = swapRes.data.data;
+    //   return this.chainInstance.nonceManager.provideNonce(
+    //     nonce,
+    //     wallet.address,
+    //     async (nextNonce) => {
+    //       const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
+    //       const trans = {
+    //         nonce: nextNonce,
+    //         from: swapData.from,
+    //         to: swapData.to,
+    //         gasLimit: BigNumber.from(gas.toString()),
+    //         data: swapData.data,
+    //         value: BigNumber.from(swapData.value),
+    //         chainId: this.chainId,
+    //       };
+    //       const tx = await wallet.sendTransaction(trans);
+    //       logger.info(JSON.stringify(tx));
+
+    //       return tx;
+    //     }
+    //   );
+    // }
+    // throw new HttpException(
+    //   swapRes.status,
+    //   `Could not get trade info. ${swapRes.statusText}`,
+    //   TRADE_FAILED_ERROR_CODE
+    // );
   }
 
   async executeTradeWithCP(
@@ -477,16 +461,17 @@ export class Newopenocean implements Uniswapish {
     maxFeePerGas?: BigNumber,
     maxPriorityFeePerGas?: BigNumber
   ): Promise<Transaction> {
-    console.log('Capital Provider', capitalProvider);
     logger.info(
-      `executeTrade ${openoceanRouter}-${ttl}-${abi}-${gasPrice}-${gasLimit}-${nonce}-${maxFeePerGas}-${maxPriorityFeePerGas}.`
+      `executeTrade ${openoceanRouter}-${capitalProvider}-${ttl}-${abi}-${gasPrice}-${gasLimit}-${nonce}-${maxFeePerGas}-${maxPriorityFeePerGas}.`
     );
+    logger.info(`executeTrade ${wallet}-${trade}`);
     const inToken: any = trade.route.input;
     const outToken: any = trade.route.output;
+
     let swapRes;
     try {
       swapRes = await axios.get(
-        `https://open-api.openocean.finance/v3/${this.chainName}/swap_quote`,
+        `https://open-api.openocean.finance/v3/bsc/swap_quote`,
         {
           params: {
             inTokenAddress: inToken.address,
@@ -518,26 +503,40 @@ export class Newopenocean implements Uniswapish {
     }
     if (swapRes.status == 200 && swapRes.data.code == 200) {
       const swapData = swapRes.data.data;
-      return this.chainInstance.nonceManager.provideNonce(
-        nonce,
-        wallet.address,
-        async (nextNonce) => {
-          const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
-          const trans = {
-            nonce: nextNonce,
-            from: swapData.from,
-            to: swapData.to,
-            gasLimit: BigNumber.from(gas.toString()),
-            data: swapData.data,
-            value: BigNumber.from(swapData.value),
-            chainId: this.chainId,
-          };
-          const tx = await wallet.sendTransaction(trans);
-          logger.info(JSON.stringify(tx));
+      const contract = new Contract(capitalProvider, routerAbi, wallet);
+      if (nonce === undefined) {
+        nonce = await this.bsc.nonceManager.getNextNonce(wallet.address);
+      }
 
-          return tx;
+      const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
+
+      await contract.callStatic.useAPIData(
+        inToken.address,
+        outToken.address,
+        parseEther(trade.inputAmount.toExact()),
+        wallet.address,
+        swapData.data,
+        {
+          gasLimit: BigNumber.from(gas.toString()),
+          nonce: nonce,
+          gasPrice: maxFeePerGas,
         }
       );
+
+      const tx = await contract.useAPIData(
+        inToken.address,
+        outToken.address,
+        parseEther(trade.inputAmount.toExact()),
+        wallet.address,
+        swapData.data,
+        {
+          gasLimit: BigNumber.from(gas.toString()),
+          nonce: nonce,
+          gasPrice: maxFeePerGas,
+        }
+      );
+
+      return tx;
     }
     throw new HttpException(
       swapRes.status,

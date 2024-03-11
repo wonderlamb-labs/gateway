@@ -10,9 +10,6 @@ gasLimitEstimate: 150688
 # perform the trade, but the gas will still be sent.
 ttl: 600
 
-capitalProvider: '0xA874F696E9d1AC19a34D9B265cc2100E514dE208'
-
 contractAddresses:
-  binance-smart-chain:
-    mainnet:
-      routerAddress: '0x8AA07F3180429709f77C859B9537F9aA1af193a0'
+  mainnet:
+    routerAddress: '0xA874F696E9d1AC19a34D9B265cc2100E514dE208'

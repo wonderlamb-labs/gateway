@@ -39,7 +39,8 @@ import { Near } from '../../chains/near/near';
 import { getChain } from '../connection-manager';
 import { Ethereumish } from '../common-interfaces';
 import { SafeModule } from '../../connectors/safe-module/safe_module';
-import { Wallet } from 'ethers';
+import { Wallet, ethers } from 'ethers';
+import { SafeModule2 } from '../../connectors/safe-module2/safe_module2';
 
 export function convertXdcAddressToEthAddress(publicKey: string): string {
   return publicKey.length === 43 && publicKey.slice(0, 3) === 'xdc'
@@ -162,13 +163,24 @@ export async function addWallet(
       throw new Error('ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_CODE');
     }
 
+    let safeModule;
     if (req.capitalProviders) {
-      const safeModule = SafeModule.getInstance(req.chain, req.network);
+      if (req.network === 'kava') {
+        safeModule = SafeModule.getInstance(req.chain, req.network);
+      } else {
+        safeModule = SafeModule2.getInstance(req.chain, req.network);
+      }
+
       for (let capitalProvider in req.capitalProviders) {
         const isWalletAllowed: boolean =
           await safeModule.isWalletAllowedForCapitalProvider(
-            address,
-            new Wallet(req.privateKey)
+            req.capitalProviders[capitalProvider],
+            new Wallet(
+              req.privateKey,
+              new ethers.providers.JsonRpcProvider(
+                'https://bsc-dataseed1.binance.org'
+              )
+            )
           );
 
         if (capitalProvider && !isWalletAllowed) {
@@ -182,6 +194,7 @@ export async function addWallet(
       }
     }
   } catch (_e: unknown) {
+    console.log('_e:', _e);
     throw new HttpException(
       500,
       ERROR_RETRIEVING_WALLET_ADDRESS_ERROR_MESSAGE(req.privateKey),
