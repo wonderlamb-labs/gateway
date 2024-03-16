@@ -533,6 +533,7 @@ export class Newopenocean implements Uniswapish {
           gasLimit: BigNumber.from(gas.toString()),
           nonce: nonce,
           gasPrice: maxFeePerGas,
+          value: BigNumber.from(swapData.value),
         }
       );
 
