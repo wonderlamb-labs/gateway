@@ -468,6 +468,10 @@ export class Newopenocean implements Uniswapish {
     const inToken: any = trade.route.input;
     const outToken: any = trade.route.output;
 
+    const contract = new Contract(capitalProvider, routerAbi, wallet);
+    const avatar = await contract.avatar();
+    const zeroAdd = '0x0000000000000000000000000000000000000000';
+
     let swapRes;
     try {
       swapRes = await axios.get(
@@ -478,9 +482,10 @@ export class Newopenocean implements Uniswapish {
             outTokenAddress: outToken.address,
             amount: trade.inputAmount.toExact(),
             slippage: this.getSlippageNumberage(),
-            account: wallet.address,
+            account: avatar,
             gasPrice: gasPrice.toString(),
             referrer: '0x3fb06064b88a65ba9b9eb840dbb5f3789f002642',
+            // sender: wallet.address,
           },
         }
       );
@@ -503,18 +508,18 @@ export class Newopenocean implements Uniswapish {
     }
     if (swapRes.status == 200 && swapRes.data.code == 200) {
       const swapData = swapRes.data.data;
-      const contract = new Contract(capitalProvider, routerAbi, wallet);
+
       if (nonce === undefined) {
         nonce = await this.bsc.nonceManager.getNextNonce(wallet.address);
       }
 
       const gas = Math.ceil(Number(swapData.estimatedGas) * 1.15);
 
-      await contract.callStatic.useAPIData(
+      await contract.callStatic.useAPIData2(
         inToken.address,
         outToken.address,
         parseEther(trade.inputAmount.toExact()),
-        wallet.address,
+        avatar === zeroAdd ? wallet.address : avatar,
         swapData.data,
         {
           gasLimit: BigNumber.from(gas.toString()),
@@ -523,11 +528,11 @@ export class Newopenocean implements Uniswapish {
         }
       );
 
-      const tx = await contract.useAPIData(
+      const tx = await contract.useAPIData2(
         inToken.address,
         outToken.address,
         parseEther(trade.inputAmount.toExact()),
-        wallet.address,
+        avatar === zeroAdd ? wallet.address : avatar,
         swapData.data,
         {
           gasLimit: BigNumber.from(gas.toString()),

@@ -111,17 +111,17 @@
             {
                 "indexed": false,
                 "internalType": "address",
-                "name": "oldAdmin",
+                "name": "oldManager",
                 "type": "address"
             },
             {
                 "indexed": false,
                 "internalType": "address",
-                "name": "newAdmin",
+                "name": "newManager",
                 "type": "address"
             }
         ],
-        "name": "SetAdmin",
+        "name": "SetManager",
         "type": "event"
     },
     {
@@ -142,19 +142,6 @@
         ],
         "name": "TargetSet",
         "type": "event"
-    },
-    {
-        "inputs": [],
-        "name": "admin",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
     },
     {
         "inputs": [
@@ -265,6 +252,19 @@
     },
     {
         "inputs": [],
+        "name": "manager",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "owner",
         "outputs": [
             {
@@ -299,59 +299,6 @@
     {
         "inputs": [
             {
-                "components": [
-                    {
-                        "internalType": "address",
-                        "name": "tokenIn",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "tokenOut",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct IRouter.SingleSwap",
-                "name": "singleSwap",
-                "type": "tuple"
-            },
-            {
-                "internalType": "uint256",
-                "name": "limit",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "deadline",
-                "type": "uint256"
-            }
-        ],
-        "name": "safeSwap",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_admin",
-                "type": "address"
-            }
-        ],
-        "name": "setAdmin",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "address",
                 "name": "_avatar",
                 "type": "address"
@@ -371,6 +318,19 @@
             }
         ],
         "name": "setGuard",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_manager",
+                "type": "address"
+            }
+        ],
+        "name": "setManager",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -399,51 +359,6 @@
         "name": "setUp",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "assetInIndex",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "assetOutIndex",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct IRouter.BatchSwapStep[]",
-                "name": "swaps",
-                "type": "tuple[]"
-            },
-            {
-                "internalType": "address[]",
-                "name": "assets",
-                "type": "address[]"
-            },
-            {
-                "internalType": "int256[]",
-                "name": "limits",
-                "type": "int256[]"
-            },
-            {
-                "internalType": "uint256",
-                "name": "deadline",
-                "type": "uint256"
-            }
-        ],
-        "name": "swapBatchRouter",
-        "outputs": [],
-        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -501,6 +416,39 @@
             }
         ],
         "name": "useAPIData",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "fromToken",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "toToken",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "fromAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "receiver",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "OOApiData",
+                "type": "bytes"
+            }
+        ],
+        "name": "useAPIData2",
         "outputs": [],
         "stateMutability": "payable",
         "type": "function"

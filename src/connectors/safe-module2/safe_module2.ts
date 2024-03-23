@@ -67,7 +67,7 @@ export class SafeModule2 {
     console.log('safeModuleContract: ', safeModuleContract.address);
     console.log('Getting admin address of module', capitalProvider);
 
-    const adminOfCapitalProvider: string = await safeModuleContract.admin();
+    const adminOfCapitalProvider: string = await safeModuleContract.manager();
     console.log('adminOfCapitalProvider: ', adminOfCapitalProvider);
 
     if (wallet.address === adminOfCapitalProvider) {
